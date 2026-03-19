@@ -39,6 +39,7 @@ lecture |  C1  C2  C3  C4  C5  C6
 
 - Title: {section.title}
 - Lecture Lines: {section.lecture_lines}
+- Line Durations: {section.line_durations}  (seconds per lecture line, from TTS)
 - Animation Description: {'; '.join(section.animations)}
 
 ## 5. Code Structure
@@ -76,16 +77,40 @@ class {section.id.title().replace('_', '')}Scene(TeachingScene):
 - **Assets**: If provided, MUST use the elements in the Animation Description formatted as `[Asset: XXX/XXX.png]` (abstract path).
 - **Simplicity**: Avoid 3D functions, complex panels, or external dependencies except for filenames in Animation Description.
 
-## 8. ScopeRefine Auto-fix Debugging
+## 8. Duration Control (TTS Sync)
+
+When `line_durations` is provided, each animation block must match the corresponding TTS audio duration:
+
+1. **Block timing**: The total time of each `# === Animation for Lecture Line N ===` block (sum of all `run_time` parameters in `self.play()` calls + all `self.wait()` calls) should match `line_durations[N-1]` seconds.
+2. **Padding**: At the end of each block, add `self.wait(remaining)` to fill any remaining time: `remaining = line_durations[N-1] - (sum of play run_times + other waits in block)`. If remaining <= 0, skip the padding wait.
+3. **Inter-line gap**: Between consecutive lecture line blocks, add `self.wait(0.5)` to match the 0.5s silence gap inserted between TTS audio lines.
+4. **Minimum run_time**: Each `self.play()` should have `run_time >= 0.5` for visual clarity. Adjust animation count and pacing accordingly.
+
+Example:
+```python
+# === Animation for Lecture Line 1 ===
+# line_durations[0] = 3.5s
+self.play(FadeIn(obj), run_time=1.5)
+self.play(Transform(a, b), run_time=1.0)
+self.wait(1.0)  # padding: 3.5 - 1.5 - 1.0 = 1.0
+
+self.wait(0.5)  # inter-line gap
+
+# === Animation for Lecture Line 2 ===
+# line_durations[1] = 2.8s
+...
+```
+
+## 9. ScopeRefine Auto-fix Debugging
 
 If rendering fails with `manim render -ql section_N.py`, apply the following escalation strategy:
 
-### Level 1 — Line Scope (up to K1=3 attempts)
+### Level 1 — Line Scope (up to 3 attempts)
 - Identify the specific offending line from the traceback.
 - Fix only that line or its immediate parameters.
 - Re-run render.
 
-### Level 2 — Block Scope (up to K2=2 attempts)
+### Level 2 — Block Scope (up to 2 attempts)
 - If Line Scope fails to resolve, identify the animation block (code between `# === Animation for Lecture Line N ===` markers).
 - Rewrite the entire block while preserving the intended visual outcome.
 - Re-run render.

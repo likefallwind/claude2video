@@ -27,6 +27,15 @@ The project is structured as a tri-agent skill pipeline that takes a learning to
 - **`teaching_scene.py`** — TeachingScene base class implementing the 6×6 Visual Anchor Grid positioning system. All generated section scenes inherit from this class. **Do not modify.**
 - **`example_section.py`** — A complete working example demonstrating correct TeachingScene usage (grid positioning, lecture line color changes, comment structure). Run with `manim render -ql example_section.py`.
 
+## TTS Narration
+
+The pipeline supports voice narration via `edge-tts` (strategy: audio-first, then video paced to match).
+
+- **`tts.py`** — CLI tool that reads `storyboard.json`, synthesizes narration audio per section, and outputs `durations.json` with per-line timings.
+- The Coder uses `line_durations` from `durations.json` to pace animations so video duration matches audio.
+- After rendering, ffmpeg merges each section's video with its audio before final concatenation.
+- Voice: `zh-CN-YunxiNeural` (configurable in `tts.py`).
+
 ## Usage
 
-This project contains an AI agent skill located in `.agents/skills/code2video/`. An AI agent can invoke this skill to execute the end-to-end video generation pipeline. See `SKILL.md` for the complete 6-stage execution workflow.
+This project contains an AI agent skill located in `.agents/skills/code2video/`. An AI agent can invoke this skill to execute the end-to-end video generation pipeline. See `SKILL.md` for the complete 8-stage execution workflow.

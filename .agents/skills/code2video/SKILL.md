@@ -5,14 +5,15 @@ description: Code-centric framework for educational video generation via executa
 
 # Code2Video Skill
 
-This skill implements the Code2Video tri-agent pipeline: **Planner → Coder → Critic**. It takes a learning topic and produces an educational Manim video.
+This skill implements the Code2Video pipeline: **Planner → TTS → Coder → Critic**. It takes a learning topic and produces an educational Manim video with narrated audio.
 
 ## Prerequisites
 
 - Python 3.9+
 - Manim Community Edition v0.19.0+ (`pip install manim`)
 - numpy
-- ffmpeg (for frame extraction and final concatenation)
+- ffmpeg (for frame extraction, audio processing, and final concatenation)
+- edge-tts (`pip install edge-tts`) — for TTS narration synthesis
 
 ## Project File Organization
 
@@ -29,6 +30,17 @@ output/{topic}/
 ├── assets/
 │   ├── {keyword}/
 │   │   └── {keyword}.png     # Downloaded asset images
+│   └── ...
+├── audio/                    # TTS output
+│   ├── section_1/
+│   │   ├── line_1.mp3        # Per-line narration
+│   │   ├── line_2.mp3
+│   │   └── section_1.mp3     # Merged section audio
+│   ├── section_2/
+│   │   └── ...
+│   └── durations.json        # Per-line durations for timing sync
+├── sections_with_audio/      # Video+audio merged sections
+│   ├── section_1.mp4
 │   └── ...
 └── media/                    # Manim render output
     └── videos/
@@ -66,24 +78,42 @@ Follow [planner.md](planner.md) Phase 3 (P_asset).
 3. For each keyword, search and download a PNG image to `output/{topic}/assets/{keyword}/{keyword}.png`.
 4. Only select concrete, real-world objects — never abstract concepts or geometric shapes.
 
-### Stage 4: Code Generation (per section)
+### Stage 4: TTS Narration Synthesis
+
+Generate narration audio from the storyboard's `narrations` field using [tts.py](tts.py).
+
+1. Run the TTS tool:
+   ```bash
+   python .agents/skills/code2video/tts.py \
+       output/{topic}/storyboard.json \
+       output/{topic}/audio/
+   ```
+2. This produces:
+   - `audio/section_N/line_M.mp3` — individual narration clips
+   - `audio/section_N/section_N.mp3` — merged section audio (with 0.5s gaps between lines)
+   - `audio/durations.json` — per-line durations for timing control
+3. Verify `durations.json` contains reasonable durations (typically 1–8 seconds per line).
+
+### Stage 5: Code Generation (per section)
 
 Follow [coder.md](coder.md).
 
 1. Copy `teaching_scene.py` from the skill directory to `output/{topic}/teaching_scene.py`.
-2. For each section in the storyboard:
+2. Load `audio/durations.json` to get `line_durations` for each section.
+3. For each section in the storyboard:
    a. Generate a Manim scene class inheriting from `TeachingScene`.
    b. Use ONLY `self.place_at_grid()` and `self.place_in_area()` for positioning.
    c. Follow the `# === Animation for Lecture Line N ===` comment structure.
-   d. Save to `output/{topic}/sections/section_N.py`.
-3. Render each section:
+   d. Apply duration control rules (coder.md §8) using `line_durations` from durations.json.
+   e. Save to `output/{topic}/sections/section_N.py`.
+4. Render each section:
    ```bash
    cd output/{topic} && manim render -ql sections/section_N.py
    ```
-4. If rendering fails, apply **ScopeRefine** debugging (see coder.md §8):
+5. If rendering fails, apply **ScopeRefine** debugging (see coder.md §9):
    - Line scope (up to 3 attempts) → Block scope (up to 2 attempts) → Global scope (full regeneration).
 
-### Stage 5: Critic Visual Refinement
+### Stage 6: Critic Visual Refinement
 
 Follow [critic.md](critic.md) Mode 1 (P_refine).
 
@@ -99,13 +129,30 @@ Since Claude Code cannot directly view video files, use frame extraction:
 3. **Apply fixes** using grid coordinates, then re-render.
 4. **Maximum 3 refinement rounds** per section. Stop early if `has_issues` is `false`.
 
-### Stage 6: Final Assembly
+### Stage 7: Audio-Video Merge
+
+Merge each section's rendered video with its TTS audio:
+
+1. Create the output directory:
+   ```bash
+   mkdir -p output/{topic}/sections_with_audio
+   ```
+2. For each section, merge video and audio:
+   ```bash
+   ffmpeg -i media/videos/section_N/480p15/SectionNScene.mp4 \
+          -i audio/section_N/section_N.mp3 \
+          -c:v copy -c:a aac -shortest \
+          output/{topic}/sections_with_audio/section_N.mp4
+   ```
+3. Verify the merged files play correctly with synchronized audio.
+
+### Stage 8: Final Assembly
 
 1. Optionally run aesthetic evaluation (critic.md Mode 2, P_aesth) on the final sections.
-2. Concatenate all section videos into the final output:
+2. Concatenate all section videos (with audio) into the final output:
    ```bash
    # Create file list
-   for f in output/{topic}/media/videos/*/480p15/*.mp4; do
+   for f in output/{topic}/sections_with_audio/section_*.mp4; do
      echo "file '$f'" >> output/{topic}/filelist.txt
    done
    # Concatenate
@@ -120,9 +167,11 @@ Since Claude Code cannot directly view video files, use frame extraction:
 | 1 | Planner | [planner.md](planner.md) | P_outline |
 | 2 | Planner | [planner.md](planner.md) | P_storyboard |
 | 3 | Planner | [planner.md](planner.md) | P_asset |
-| 4 | Coder | [coder.md](coder.md) | P_coder + P_vis + ScopeRefine |
-| 5 | Critic | [critic.md](critic.md) | P_refine |
-| 6 | Critic | [critic.md](critic.md) | P_aesth (optional) |
+| 4 | TTS | [tts.py](tts.py) | CLI tool |
+| 5 | Coder | [coder.md](coder.md) | P_coder + P_vis + Duration Control + ScopeRefine |
+| 6 | Critic | [critic.md](critic.md) | P_refine |
+| 7 | — | — | ffmpeg audio-video merge |
+| 8 | Critic | [critic.md](critic.md) | P_aesth (optional) + concat |
 
 ## Core Infrastructure
 

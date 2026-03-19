@@ -73,6 +73,7 @@ You are a professional education Explainer and Animator, expert at converting ma
 - In key sections, assets not forbidden.
 - Must keep each lecture line brief.
 - Animation steps must closely correspond to lecture points.
+- **`narrations`** array must have the same length as `lecture_lines`, one-to-one correspondence. Each narration is the spoken version of its lecture line (strip the leading "- " prefix). In the current version, narrations equal lecture_lines content without the "- " prefix; future versions may expand them into more conversational speech.
 - **Do not apply any animation to lecture lines except for changing the color** of the corresponding line when its related animation is presented.
 
 ### Visual Design
@@ -99,7 +100,8 @@ MUST output the storyboard design in JSON format:
         {{
             "id": "section_1",
             "title": "Sec 1: Section Title",
-            "lecture_lines": ["Lecture line 1", "Lecture line 2", ...],
+            "lecture_lines": ["- Lecture line 1", "- Lecture line 2", ...],
+            "narrations": ["Lecture line 1 narration text", "Lecture line 2 narration text", ...],
             "animations": [
                 "Animation step 1: ...",
                 "Animation step 2: ...",
