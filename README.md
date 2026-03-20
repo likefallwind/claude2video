@@ -1,8 +1,34 @@
-# code2video
+# claude2video
 
 An AI agent skill for generating educational videos from a topic or Markdown outline. Built on [Manim Community Edition](https://www.manim.community/) with TTS narration via edge-tts.
 
 Adapted from the [Code2Video](https://github.com/showlab/Code2Video) paradigm (arXiv:2510.01174) into a Claude Code skill format.
+
+---
+
+## Installation
+
+**Step 1 — Install the skill into your project:**
+
+```bash
+npm install claude2video
+```
+
+This copies the skill files into `.agents/skills/claude2video/` in your project.
+
+**Step 2 — Install Python and system dependencies:**
+
+```bash
+bash node_modules/claude2video/setup.sh
+```
+
+Supports Ubuntu/Debian (including WSL2), Fedora, and macOS.
+
+**Step 3 — Use the skill in Claude Code:**
+
+```
+@claude2video 生成一个讲解「光合作用」的教学视频
+```
 
 ---
 
@@ -33,15 +59,22 @@ Each section of the course becomes a separate Manim animation scene. Narration a
 
 ```
 .
-├── .agents/skills/code2video/   # The skill
-│   ├── SKILL.md                 # Entry point — 8-stage pipeline execution guide
-│   ├── planner.md               # P_parse / P_outline / P_storyboard / P_asset prompts
-│   ├── coder.md                 # P_coder + Duration Control + ScopeRefine prompts
-│   ├── critic.md                # P_refine (layout) + P_aesth (scoring) prompts
-│   ├── tts.py                   # CLI tool: storyboard.json → audio/ + durations.json
-│   ├── teaching_scene.py        # TeachingScene base class (6×6 grid system)
-│   └── example_section.py       # Working example — run with: manim render -ql example_section.py
-├── CLAUDE.md                    # Project instructions for Claude Code
+├── .agents/skills/claude2video/   # The skill (copied to user project on npm install)
+│   ├── SKILL.md                   # Entry point — 8-stage pipeline execution guide
+│   ├── planner.md                 # P_parse / P_outline / P_storyboard / P_asset prompts
+│   ├── coder.md                   # P_coder + Duration Control + ScopeRefine prompts
+│   ├── critic.md                  # P_refine (layout) + P_aesth (scoring) prompts
+│   ├── tts.py                     # CLI: storyboard.json → audio/ + durations.json
+│   ├── teaching_scene.py          # TeachingScene base class (6×6 grid system)
+│   └── example_section.py         # Working example — manim render -ql example_section.py
+├── examples/
+│   └── biology_cells.md           # Sample Markdown course outline (7th grade biology)
+├── scripts/
+│   └── install.js                 # npm postinstall — copies skill to .agents/skills/
+├── package.json
+├── requirements.txt               # Python dependencies
+├── setup.sh                       # System dependency installer
+├── CLAUDE.md                      # Project instructions for Claude Code
 ├── .gitignore
 └── README.md
 ```
@@ -75,12 +108,12 @@ output/{topic}/
 Invoke the skill from Claude Code:
 
 ```
-/code2video
+/claude2video
 ```
 
 Or reference it directly in a prompt:
 
-> 请用 code2video skill 生成一个讲解「勾股定理」的教学视频
+> 请用 claude2video skill 生成一个讲解「勾股定理」的教学视频
 
 The skill will ask whether to generate sections in **parallel** (faster) or **sequential** (step-by-step review) before starting.
 

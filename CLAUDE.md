@@ -1,9 +1,9 @@
 # CLAUDE.md
 
-This repository implements **code2video**, a code-centric agent skill framework for generating educational videos via executable Manim code. It adapts the "Code2Video" paradigm (arXiv:2510.01174) into an AI Agent skill format.
+This repository implements **claude2video**, a code-centric agent skill framework for generating educational videos via executable Manim code. It adapts the "Code2Video" paradigm (arXiv:2510.01174) into an AI Agent skill format.
 
 Reference implementation: https://github.com/showlab/Code2Video
-Reference paper: code2video-arxiv.pdf
+Reference paper: https://arxiv.org/abs/2510.01174
 
 ## Architecture (Skills Pipeline)
 
@@ -38,4 +38,4 @@ The pipeline supports voice narration via `edge-tts` (strategy: audio-first, the
 
 ## Usage
 
-This project contains an AI agent skill located in `.agents/skills/code2video/`. An AI agent can invoke this skill to execute the end-to-end video generation pipeline. See `SKILL.md` for the complete 8-stage execution workflow.
+This project contains an AI agent skill located in `.agents/skills/claude2video/`. An AI agent can invoke this skill to execute the end-to-end video generation pipeline. See `SKILL.md` for the complete 8-stage execution workflow.

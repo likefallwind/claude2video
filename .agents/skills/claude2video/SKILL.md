@@ -1,5 +1,5 @@
 ---
-name: code2video
+name: claude2video
 description: Code-centric framework for educational video generation via executable Manim Python code.
 ---
 
@@ -9,11 +9,20 @@ This skill implements the Code2Video pipeline: **Planner → TTS → Coder → C
 
 ## Prerequisites
 
+Run the one-command installer from the repo root:
+
+```bash
+bash setup.sh          # installs system deps + Python packages + LaTeX
+bash setup.sh --no-latex  # skip LaTeX (~800 MB) if you don't need math formulas
+```
+
+The script supports Ubuntu/Debian (including WSL2), Fedora, and macOS. Windows users without WSL should follow the [Manim Windows guide](https://docs.manim.community/en/stable/installation/windows.html) and then run `pip install -r requirements.txt`.
+
+Full dependency list (see `requirements.txt`):
 - Python 3.9+
-- Manim Community Edition v0.19.0+ (`pip install manim`)
-- numpy
-- ffmpeg (for frame extraction, audio processing, and final concatenation)
-- edge-tts (`pip install edge-tts`) — for TTS narration synthesis
+- Manim Community Edition v0.19.0+
+- numpy, edge-tts
+- System: ffmpeg, Cairo, Pango, (optional) LaTeX
 
 ## Project File Organization
 
@@ -72,11 +81,22 @@ Two paths depending on input:
 Follow [planner.md](planner.md) Phase 2 (P_storyboard).
 
 1. Take the outline JSON and reference image as input.
-2. Generate the storyboard JSON with lecture_lines and animations per section.
+2. Generate the storyboard JSON with lecture_lines, narrations, and animations per section.
 3. Apply content structure rules:
    - **Key sections**: 5 lecture lines + 5 animations
    - **Other sections**: 3 lecture lines + 3 animations
-4. Save to `output/{topic}/storyboard.json`.
+4. **Narration quality check** (CRITICAL): Before saving, verify each narration against planner.md's "Narration Style" rules:
+   - Is it conversational teacher-speech, NOT a rewording of the lecture line?
+   - Does it include the 4-part structure: Hook → Explain why → Concrete numbers → Bridge?
+   - Does the first narration of each section (except section 1) bridge from the previous section?
+   - Is each narration 60–150 Chinese characters (or equivalent)?
+   If any narration is just the lecture line text rephrased, rewrite it before proceeding.
+5. Save to `output/{topic}/storyboard.json`.
+6. **User review** (MANDATORY): Present a summary of the storyboard to the user and **wait for approval before proceeding**. The summary should include:
+   - Section count and titles
+   - For each section: the lecture_lines list and the first narration (as a quality sample)
+   - Ask: "请确认以上 storyboard 内容，如需修改请告知，确认后将继续 Stage 3。"
+   - Do NOT proceed to Stage 3 until the user explicitly confirms (e.g., "确认", "好的", "继续", "ok").
 
 ### Stage 3: Asset Selection & Download
 
@@ -93,7 +113,7 @@ Generate narration audio from the storyboard's `narrations` field using [tts.py]
 
 1. Run the TTS tool:
    ```bash
-   python .agents/skills/code2video/tts.py \
+   python .agents/skills/claude2video/tts.py \
        output/{topic}/storyboard.json \
        output/{topic}/audio/
    ```
@@ -128,7 +148,7 @@ Follow [coder.md](coder.md).
    - **If parallel**: launch all render commands in one message via parallel Bash tool calls.
    - **If sequential**: render each section immediately after generating it.
    ```bash
-   cd output/{topic} && manim render -ql sections/section_N.py
+   cd output/{topic} && manim render -qh sections/section_N.py
    ```
 7. For any section that fails to render, apply **ScopeRefine** debugging (see coder.md §9):
    - Line scope (up to 3 attempts) → Block scope (up to 2 attempts) → Global scope (full regeneration).
@@ -142,7 +162,7 @@ Since Claude Code cannot directly view video files, use frame extraction:
 
 1. **Extract frames** from the rendered video:
    ```bash
-   ffmpeg -i media/videos/section_N/480p15/SectionNScene.mp4 \
+   ffmpeg -i media/videos/section_N/1080p60/SectionNScene.mp4 \
           -vf "select='not(mod(n\,15))'" -vsync vfr \
           output/{topic}/frames/section_N_frame_%03d.png
    ```
@@ -160,7 +180,7 @@ Merge each section's rendered video with its TTS audio:
    ```
 2. For each section, merge video and audio:
    ```bash
-   ffmpeg -i media/videos/section_N/480p15/SectionNScene.mp4 \
+   ffmpeg -i media/videos/section_N/1080p60/SectionNScene.mp4 \
           -i audio/section_N/section_N.mp3 \
           -c:v copy -c:a aac -shortest \
           output/{topic}/sections_with_audio/section_N.mp4

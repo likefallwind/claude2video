@@ -1,0 +1,31 @@
+{
+  "name": "claude2video",
+  "version": "1.0.0",
+  "description": "Claude Code skill for generating educational Manim videos with TTS narration",
+  "keywords": [
+    "claude-code",
+    "claude-skill",
+    "manim",
+    "education",
+    "video-generation",
+    "tts"
+  ],
+  "author": "",
+  "license": "MIT",
+  "files": [
+    ".agents/",
+    "examples/",
+    "requirements.txt",
+    "setup.sh",
+    "scripts/"
+  ],
+  "bin": {
+    "claude2video": "./scripts/install.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
