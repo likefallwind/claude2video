@@ -5,7 +5,7 @@ description: Code-centric framework for educational video generation via executa
 
 # Code2Video Skill
 
-This skill implements the Code2Video pipeline: **Planner → TTS → Coder → Critic**. It takes a learning topic and produces an educational Manim video with narrated audio.
+This skill implements the Code2Video pipeline: **Planner → TTS → Coder → Critic**. It takes either a **Markdown course outline file** or a **topic string**, and produces an educational Manim video with narrated audio.
 
 ## Prerequisites
 
@@ -49,9 +49,18 @@ output/{topic}/
 
 ## Execution Pipeline
 
-### Stage 1: Outline Generation
+### Stage 1: Outline
 
-Follow [planner.md](planner.md) Phase 1 (P_outline).
+Two paths depending on input:
+
+**Path A — Markdown outline provided** (follow [planner.md](planner.md) Phase 0, P_parse):
+
+1. User provides a Markdown file path, e.g. `my_course.md`.
+2. Read the file. Parse sections, topic, and target audience from the Markdown structure.
+3. Map directly to `outline.json` — section count must match the Markdown exactly.
+4. Save to `output/{topic}/outline.json`.
+
+**Path B — Topic string only** (follow [planner.md](planner.md) Phase 1, P_outline):
 
 1. Take the user's topic as `{knowledge_point}`.
 2. If a reference image is available, provide it to guide the outline.
@@ -100,18 +109,30 @@ Follow [coder.md](coder.md).
 
 1. Copy `teaching_scene.py` from the skill directory to `output/{topic}/teaching_scene.py`.
 2. Load `audio/durations.json` to get `line_durations` for each section.
-3. For each section in the storyboard:
-   a. Generate a Manim scene class inheriting from `TeachingScene`.
-   b. Use ONLY `self.place_at_grid()` and `self.place_in_area()` for positioning.
-   c. Follow the `# === Animation for Lecture Line N ===` comment structure.
-   d. Apply duration control rules (coder.md §8) using `line_durations` from durations.json.
-   e. Save to `output/{topic}/sections/section_N.py`.
-4. Render each section:
+3. **Ask the user** before generating:
+   > "准备生成 {N} 个 section 的代码。请问您希望：
+   > - **并发生成**（所有 section 同时生成，速度更快，约快 {N}×）
+   > - **逐个生成**（顺序生成，每个 section 完成后可以即时查看结果）"
+
+   Wait for the user's answer before proceeding.
+
+4. **If parallel**: in a single message, write all `section_N.py` files concurrently using parallel Write tool calls — one per section.
+   **If sequential**: write and render each section one at a time, reporting progress after each.
+5. Each generated file must:
+   - Each file: a Manim scene class inheriting from `TeachingScene`.
+   - Use ONLY `self.place_at_grid()` and `self.place_in_area()` for positioning.
+   - Follow the `# === Animation for Lecture Line N ===` comment structure.
+   - Apply duration control rules (coder.md §8) using `line_durations` from durations.json.
+   - Save to `output/{topic}/sections/section_N.py`.
+6. **Render** (follow same parallel/sequential choice as generation):
+   - **If parallel**: launch all render commands in one message via parallel Bash tool calls.
+   - **If sequential**: render each section immediately after generating it.
    ```bash
    cd output/{topic} && manim render -ql sections/section_N.py
    ```
-5. If rendering fails, apply **ScopeRefine** debugging (see coder.md §9):
+7. For any section that fails to render, apply **ScopeRefine** debugging (see coder.md §9):
    - Line scope (up to 3 attempts) → Block scope (up to 2 attempts) → Global scope (full regeneration).
+   - Fix and re-render failed sections; successfully rendered sections are not re-touched.
 
 ### Stage 6: Critic Visual Refinement
 

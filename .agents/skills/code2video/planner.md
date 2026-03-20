@@ -4,6 +4,48 @@ As an outstanding instructional design expert, design a logically clear, step-by
 
 ---
 
+## Phase 0: Markdown Outline Parsing (P_parse)
+
+Use this phase **instead of** P_outline when the user provides a Markdown course outline file.
+
+### Input
+- **Markdown file path**: `{outline_md_path}` — read this file directly.
+
+### Task
+
+Parse the Markdown file and map it to the standard `outline.json` format. Follow these rules:
+
+1. **Topic**: extract from the top-level `# Heading`. If absent, derive from the filename.
+2. **Target audience**: extract from a line like `目标受众：...` or `Target Audience: ...`. If absent, infer from the content level (e.g., 初中生, university students).
+3. **Sections**: each second-level `## Heading` (or top-level bullet group if no `##` exists) becomes one section. The number of sections in `outline.json` **must exactly match** the number of sections in the Markdown — do not add, merge, or split sections.
+4. **Content**: use the body text / bullet points under each `##` heading as the `content` field. Summarize if verbose.
+5. **Example**: if an example is explicitly written in the Markdown, use it. Otherwise, generate a suitable concrete example that fits the section content.
+6. **Section IDs**: assign sequentially as `section_1`, `section_2`, …
+
+### Output Format (JSON)
+
+MUST output in the same format as P_outline:
+
+```json
+{{
+    "topic": "Topic Name",
+    "target_audience": "Target Audience",
+    "sections": [
+        {{
+            "id": "section_1",
+            "title": "Section Title",
+            "content": "Description of the section content",
+            "example": "..."
+        }},
+        ...
+    ]
+}}
+```
+
+Save to `output/{topic}/outline.json` and proceed to Phase 2 (P_storyboard).
+
+---
+
 ## Phase 1: Outline Generation (P_outline)
 
 ### Input
