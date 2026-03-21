@@ -45,6 +45,8 @@ In addition to visual frame analysis, read the section's `.py` source code and c
 - **Graph construction**: Does the code use raw `Arrow` objects to build coordinate axes? Flag and recommend `Axes` / `create_fitted_axes`.
 - **Label positioning**: Does the code use `.move_to(point + np.array([...]))` for labels? Flag and recommend `.next_to()` or `axes.get_graph_label()`.
 - **Overflow risk**: Does the code use `place_in_area()` for large objects (Axes, VGroup with many items)? Flag and recommend `fit_and_place()`.
+- **Plain text for concepts**: Does any block display a concept definition or summary using bare `Text()`? Suggest using `create_info_card` or `create_callout_box` from `visual_components.py` for a more polished look.
+- **Color inconsistency**: Does the code use many ad-hoc hex color values instead of a consistent palette? Suggest using `COLOR_PALETTES` from `visual_components.py`.
 
 ### 5. Grid-Based Solution Methodology
 
@@ -132,6 +134,9 @@ Evaluate the visual appeal and engagement factors:
 - Creative use of visual metaphors and illustrations
 - Ability to capture and maintain learner attention
 - Professional presentation quality
+- **Visual component usage**: Are info cards, callout boxes, and other enhanced components used instead of plain text? (bonus)
+- **Color palette consistency**: Does the video use a consistent `COLOR_PALETTES` scheme throughout? (bonus)
+- **Decorative elements**: Are separators, gradient backgrounds, or highlight regions used to add visual polish? (bonus)
 
 #### 3. Logic Flow (20 points)
 Analyze the pedagogical structure and content progression:

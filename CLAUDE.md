@@ -25,9 +25,11 @@ The project is structured as a tri-agent skill pipeline that takes a learning to
 ## Core Infrastructure
 
 - **`teaching_scene.py`** — TeachingScene base class implementing the 6×6 Visual Anchor Grid positioning system. All generated section scenes inherit from this class. **Do not modify.**
-- **`anim_helpers.py`** — Animation helper utilities (`fit_and_place`, `create_fitted_axes`, `animate_along_curve`, `strobe_effect`) that ensure objects fit within grid areas and provide dynamic animation patterns. Copied alongside `teaching_scene.py` to the output directory at Stage 5.
-- **`animation_patterns.md`** — Reference library of 8 reusable Manim code patterns (Axes coordinate system, dynamic trajectory, strobe effect, formula derivation, annotations, staggered appearance, etc.) for the Coder to consult during code generation.
-- **`example_section.py`** — A complete working example demonstrating correct TeachingScene usage (Axes, ValueTracker, LaggedStart, fit_and_place, .next_to() labels). Run with `manim render -ql example_section.py`.
+- **`anim_helpers.py`** — Animation helper utilities (`fit_and_place`, `create_fitted_axes`, `animate_along_curve`, `strobe_effect`, `highlight_region`, `pulse_glow`, `animated_arrow_chain`) that ensure objects fit within grid areas and provide dynamic animation patterns. Copied alongside `teaching_scene.py` to the output directory at Stage 5.
+- **`visual_components.py`** — High-level UI component library (`create_info_card`, `create_callout_box`, `create_number_badge`, `create_comparison_layout`, `create_separator`, `create_gradient_rect`) and subject-based `COLOR_PALETTES` system (physics, math, biology, chemistry, default). Copied to the output directory at Stage 5.
+- **`gen_images.py`** — AI image generation CLI tool using Google Gemini API (`gemini-2.0-flash-exp`). Reads `storyboard.json` + `assets.txt`, generates asset icons (512×512) and optional section illustrations (16:9), outputs to `assets/` directory with `manifest.json`. Requires `GOOGLE_API_KEY` environment variable.
+- **`animation_patterns.md`** — Reference library of 12 reusable Manim code patterns (Axes coordinate system, dynamic trajectory, strobe effect, formula derivation, annotations, staggered appearance, info cards, callout boxes, step badges, comparison layouts) for the Coder to consult during code generation.
+- **`example_section.py`** — Complete working examples demonstrating correct TeachingScene usage: `ExampleScene` (Axes, ValueTracker, LaggedStart, fit_and_place) and `EnhancedExampleScene` (COLOR_PALETTES, info cards, callout boxes, number badges). Run with `manim render -ql example_section.py`.
 
 ## TTS Narration
 

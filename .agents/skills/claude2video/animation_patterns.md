@@ -213,3 +213,100 @@ self.play(LaggedStart(*[FadeIn(item, shift=RIGHT * 0.3) for item in items],
                        lag_ratio=0.3),
           run_time=2.5)
 ```
+
+---
+
+## Pattern 9: Info Card
+
+**When to use**: Displaying a concept definition, key takeaway, or summary box with a title and body text. Replaces plain `Text` for structured information.
+
+```python
+from visual_components import create_info_card, COLOR_PALETTES
+
+palette = COLOR_PALETTES["physics"]
+
+# Create an info card in grid area B2–D5
+card = create_info_card(
+    self, "Newton's First Law",
+    "An object at rest stays at rest,\nan object in motion stays in motion\nunless acted upon by an external force.",
+    "B2", "D5",
+    accent_color=palette["primary"],
+)
+self.play(FadeIn(card, shift=UP * 0.2), run_time=1.5)
+
+# Optionally highlight the card
+from anim_helpers import pulse_glow
+pulse_glow(self, card, color=palette["accent"], n_pulses=2, run_time=1.0)
+```
+
+---
+
+## Pattern 10: Callout Box
+
+**When to use**: Highlighting a key formula, important note, or warning. Use `"formula"` style for equations, `"key"` for critical points, `"note"` for supplementary info.
+
+```python
+from visual_components import create_callout_box
+
+# Key point callout (gold accent)
+key_box = create_callout_box(
+    self, "The trajectory is a parabola!",
+    "B2", "C5", style="key",
+)
+self.play(FadeIn(key_box, shift=LEFT * 0.2), run_time=1.0)
+
+# Formula callout (purple accent)
+formula_box = create_callout_box(
+    self, "y = (1/2)gt^2",
+    "D2", "E5", style="formula",
+)
+self.play(FadeIn(formula_box, shift=LEFT * 0.2), run_time=1.0)
+```
+
+---
+
+## Pattern 11: Step Process with Badges
+
+**When to use**: Showing a numbered process or sequence of steps. Combines `create_number_badge` with `animated_arrow_chain` for flow visualization.
+
+```python
+from visual_components import create_number_badge
+from anim_helpers import animated_arrow_chain
+
+# Create step badges
+badge1 = create_number_badge(self, 1, "Decompose", "B2", color="#4FC3F7")
+badge2 = create_number_badge(self, 2, "Analyze", "B4", color="#81C784")
+badge3 = create_number_badge(self, 3, "Combine", "B6", color="#FFD700")
+
+self.play(LaggedStart(
+    FadeIn(badge1, scale=0.5),
+    FadeIn(badge2, scale=0.5),
+    FadeIn(badge3, scale=0.5),
+    lag_ratio=0.3,
+), run_time=1.5)
+
+# Connect with animated arrows
+arrows = animated_arrow_chain(self, ["B3", "B5"], color="#90A4AE", run_time=1.0)
+```
+
+---
+
+## Pattern 12: Comparison Layout
+
+**When to use**: Showing two contrasting approaches, before/after states, or any side-by-side comparison.
+
+```python
+from visual_components import create_comparison_layout, COLOR_PALETTES
+
+palette = COLOR_PALETTES["physics"]
+
+comparison = create_comparison_layout(
+    self,
+    left_items=["Constant velocity", "No acceleration", "x = v0 * t"],
+    right_items=["Accelerating", "a = g = 9.8", "y = 1/2 gt^2"],
+    tl="B2", br="E6",
+    left_color=palette["primary"],
+    right_color=palette["secondary"],
+)
+self.play(FadeIn(comparison, shift=UP * 0.2), run_time=2.0)
+```

@@ -21,8 +21,9 @@ The script supports Ubuntu/Debian (including WSL2), Fedora, and macOS. Windows u
 Full dependency list (see `requirements.txt`):
 - Python 3.9+
 - Manim Community Edition v0.19.0+
-- numpy, edge-tts
+- numpy, edge-tts, google-genai, Pillow
 - System: ffmpeg, Cairo, Pango, (optional) LaTeX
+- Environment: `GOOGLE_API_KEY` (for AI image generation, optional — falls back to web search)
 
 ## Project File Organization
 
@@ -30,7 +31,7 @@ Full dependency list (see `requirements.txt`):
 output/{topic}/
 ├── outline.json              # Phase 1 output
 ├── storyboard.json           # Phase 2 output
-├── assets.txt                # Phase 3 output (asset keywords)
+├── assets.txt                # Phase 3 output (asset keywords + descriptions)
 ├── teaching_scene.py         # Base class (copied from skill directory)
 ├── sections/
 │   ├── section_1.py          # Manim scene for section 1
@@ -38,7 +39,10 @@ output/{topic}/
 │   └── ...
 ├── assets/
 │   ├── {keyword}/
-│   │   └── {keyword}.png     # Downloaded asset images
+│   │   └── {keyword}.png     # AI-generated or downloaded asset images
+│   ├── section_N/
+│   │   └── illustration.png  # AI-generated section illustration (optional)
+│   ├── manifest.json          # Image generation manifest (prompts, model, paths)
 │   └── ...
 ├── audio/                    # TTS output
 │   ├── section_1/
@@ -100,14 +104,32 @@ Follow [planner.md](planner.md) Phase 2 (P_storyboard).
    - Ask: "请确认以上 storyboard 内容，如需修改请告知，确认后将继续 Stage 3。"
    - Do NOT proceed to Stage 3 until the user explicitly confirms (e.g., "确认", "好的", "继续", "ok").
 
-### Stage 3: Asset Selection & Download
+### Stage 3a: Asset Selection
 
 Follow [planner.md](planner.md) Phase 3 (P_asset).
 
 1. Analyze the storyboard for essential visual elements needing real images.
-2. Output asset keywords (one per line) to `output/{topic}/assets.txt`.
-3. For each keyword, search and download a PNG image to `output/{topic}/assets/{keyword}/{keyword}.png`.
+2. Output asset keywords (in `keyword: description` format, one per line) to `output/{topic}/assets.txt`.
+3. Include `section_illustrations: true/false` at the end of `assets.txt`.
 4. Only select concrete, real-world objects — never abstract concepts or geometric shapes.
+
+### Stage 3b: AI Image Generation
+
+Generate asset images using [gen_images.py](gen_images.py) (requires `GOOGLE_API_KEY` environment variable).
+
+1. Run the image generation tool:
+   ```bash
+   python .agents/skills/claude2video/gen_images.py \
+       output/{topic}/storyboard.json \
+       output/{topic}/assets.txt \
+       output/{topic}/assets/ \
+       --section-illustrations   # if assets.txt contains "section_illustrations: true"
+   ```
+2. This produces:
+   - `assets/{keyword}/{keyword}.png` — AI-generated asset icons (512×512, 1:1)
+   - `assets/section_N/illustration.png` — Section illustrations (16:9, if requested)
+   - `assets/manifest.json` — Records prompts, model, and paths for each generated image
+3. Verify generated images exist and are reasonable. If `GOOGLE_API_KEY` is not set, fall back to web search download (Stage 3a legacy behavior).
 
 ### Stage 4: TTS Narration Synthesis
 
@@ -129,10 +151,11 @@ Generate narration audio from the storyboard's `narrations` field using [tts.py]
 
 Follow [coder.md](coder.md). Read [animation_patterns.md](animation_patterns.md) for reusable code patterns before generating code.
 
-1. Copy `teaching_scene.py` and `anim_helpers.py` from the skill directory to `output/{topic}/`:
+1. Copy infrastructure files from the skill directory to `output/{topic}/`:
    ```bash
    cp .agents/skills/claude2video/teaching_scene.py output/{topic}/teaching_scene.py
    cp .agents/skills/claude2video/anim_helpers.py output/{topic}/anim_helpers.py
+   cp .agents/skills/claude2video/visual_components.py output/{topic}/visual_components.py
    ```
 2. Load `audio/durations.json` to get `line_durations` for each section.
 3. **Ask the user** before generating:
@@ -215,7 +238,8 @@ Merge each section's rendered video with its TTS audio:
 |-------|------|-------------|-------------|
 | 1 | Planner | [planner.md](planner.md) | P_outline |
 | 2 | Planner | [planner.md](planner.md) | P_storyboard |
-| 3 | Planner | [planner.md](planner.md) | P_asset |
+| 3a | Planner | [planner.md](planner.md) | P_asset |
+| 3b | Image Gen | [gen_images.py](gen_images.py) | CLI tool |
 | 4 | TTS | [tts.py](tts.py) | CLI tool |
 | 5 | Coder | [coder.md](coder.md) | P_coder + P_vis + Duration Control + ScopeRefine |
 | 6 | Critic | [critic.md](critic.md) | P_refine |
@@ -225,6 +249,8 @@ Merge each section's rendered video with its TTS audio:
 ## Core Infrastructure
 
 - **[teaching_scene.py](teaching_scene.py)** — TeachingScene base class with 6×6 grid system. **DO NOT MODIFY.** All section scenes must inherit from this class.
-- **[anim_helpers.py](anim_helpers.py)** — Animation helper utilities: `fit_and_place`, `create_fitted_axes`, `animate_along_curve`, `strobe_effect`. Copied to output directory at Stage 5.
-- **[animation_patterns.md](animation_patterns.md)** — 8 reusable Manim code patterns (Axes, ValueTracker, strobe, LaggedStart, etc.) for the Coder to reference.
-- **[example_section.py](example_section.py)** — Working example demonstrating correct usage of TeachingScene, grid positioning, Axes, ValueTracker, LaggedStart, and fit_and_place.
+- **[anim_helpers.py](anim_helpers.py)** — Animation helper utilities: `fit_and_place`, `create_fitted_axes`, `animate_along_curve`, `strobe_effect`, `highlight_region`, `pulse_glow`, `animated_arrow_chain`. Copied to output directory at Stage 5.
+- **[visual_components.py](visual_components.py)** — High-level UI components (`create_info_card`, `create_callout_box`, `create_number_badge`, `create_comparison_layout`, `create_separator`, `create_gradient_rect`) and `COLOR_PALETTES` subject-based color system. Copied to output directory at Stage 5.
+- **[gen_images.py](gen_images.py)** — AI image generation CLI tool using Google Gemini API. Generates asset icons and optional section illustrations from storyboard context. Run at Stage 3b.
+- **[animation_patterns.md](animation_patterns.md)** — 12 reusable Manim code patterns (Axes, ValueTracker, strobe, LaggedStart, info cards, callouts, badges, comparison layouts, etc.) for the Coder to reference.
+- **[example_section.py](example_section.py)** — Working examples demonstrating correct usage of TeachingScene, grid positioning, Axes, ValueTracker, LaggedStart, fit_and_place, and enhanced visual components (`EnhancedExampleScene`).

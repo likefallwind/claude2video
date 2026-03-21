@@ -4,8 +4,9 @@ You are an expert Manim animator using Manim Community Edition v0.19.0.
 Please generate a high-quality Manim class based on the following teaching script.
 
 **Reference files** (read these for reusable code patterns and helper functions):
-- [animation_patterns.md](animation_patterns.md) — 8 ready-to-use Manim code patterns (Axes, ValueTracker, strobe, LaggedStart, etc.)
-- [anim_helpers.py](anim_helpers.py) — importable helper functions: `fit_and_place`, `create_fitted_axes`, `animate_along_curve`, `strobe_effect`
+- [animation_patterns.md](animation_patterns.md) — 12 ready-to-use Manim code patterns (Axes, ValueTracker, strobe, LaggedStart, info cards, callouts, badges, etc.)
+- [anim_helpers.py](anim_helpers.py) — importable helper functions: `fit_and_place`, `create_fitted_axes`, `animate_along_curve`, `strobe_effect`, `highlight_region`, `pulse_glow`, `animated_arrow_chain`
+- [visual_components.py](visual_components.py) — high-level UI components: `create_info_card`, `create_callout_box`, `create_number_badge`, `create_comparison_layout`, `create_separator`, `create_gradient_rect`, `COLOR_PALETTES`
 
 {regenerate_note}
 
@@ -90,6 +91,63 @@ class {section.id.title().replace('_', '')}Scene(TeachingScene):
         obj_last = ...
         self.play(FadeIn(obj_last), run_time=1.0)
         self.wait(remaining)                # no FadeOut on last block
+```
+
+### Example with Visual Components (Enhanced)
+
+```python
+from manim import *
+from teaching_scene import TeachingScene
+from anim_helpers import fit_and_place, highlight_region, pulse_glow
+from visual_components import (
+    COLOR_PALETTES, create_info_card, create_callout_box, create_number_badge,
+)
+
+class Section1Scene(TeachingScene):
+    def construct(self):
+        palette = COLOR_PALETTES["physics"]
+
+        self.setup_layout("Motion Decomposition", [
+            "- Projectile = horizontal + vertical",
+            "- Key formula: y = 1/2 gt^2",
+            "- Three-step analysis",
+        ])
+
+        # === Animation for Lecture Line 1 ===
+        self.play(self.lecture[0].animate.set_color(palette["accent"]), run_time=0.5)
+
+        card = create_info_card(
+            self, "Projectile Motion",
+            "Horizontal: uniform velocity\nVertical: free-fall acceleration",
+            "A2", "C5", accent_color=palette["primary"],
+        )
+        self.play(FadeIn(card, shift=UP * 0.2), run_time=1.5)
+        self.wait(1.0)
+        self.play(FadeOut(card), run_time=0.5)
+
+        # === Animation for Lecture Line 2 ===
+        self.play(self.lecture[1].animate.set_color(palette["accent"]), run_time=0.5)
+
+        callout = create_callout_box(
+            self, "y = (1/2) g t^2",
+            "B2", "D5", style="formula",
+        )
+        self.play(FadeIn(callout, shift=LEFT * 0.2), run_time=1.0)
+        pulse_glow(self, callout, color=palette["accent"], n_pulses=1, run_time=0.8)
+        self.wait(0.5)
+        self.play(FadeOut(callout), run_time=0.5)
+
+        # === Animation for Lecture Line 3 (last) ===
+        self.play(self.lecture[2].animate.set_color(palette["accent"]), run_time=0.5)
+
+        badge1 = create_number_badge(self, 1, "Decompose", "C2", color=palette["primary"])
+        badge2 = create_number_badge(self, 2, "Analyze", "C4", color=palette["highlight"])
+        badge3 = create_number_badge(self, 3, "Combine", "C6", color=palette["accent"])
+        self.play(LaggedStart(
+            FadeIn(badge1, scale=0.5), FadeIn(badge2, scale=0.5),
+            FadeIn(badge3, scale=0.5), lag_ratio=0.3,
+        ), run_time=1.5)
+        self.wait(1.5)
 ```
 
 ### Example with Axes + ValueTracker + .next_to()
@@ -242,6 +300,64 @@ See [animation_patterns.md](animation_patterns.md) for complete, runnable code e
 3. **Real physics values**: Physical parameters must match the narration and real-world values: `g = 9.8 m/s²`, `v₀` from the narration's stated value, etc.
 4. **Axis labels**: Use `axes.get_axis_labels()` or position labels with `.next_to(axis, direction)`. Never use `.move_to(point + offset)`.
 5. **Graph labels**: Use `axes.get_graph_label(graph, label)` to place labels near curves.
+
+## 7.8 Visual Component Library (RECOMMENDED)
+
+When storyboard animations include `[CARD]`, `[CALLOUT]`, `[COMPARE]`, or `[STEPS]` tags, use the corresponding components from `visual_components.py`.
+
+**Import**:
+```python
+from visual_components import (
+    create_info_card, create_callout_box, create_number_badge,
+    create_comparison_layout, create_separator, create_gradient_rect,
+    COLOR_PALETTES,
+)
+from anim_helpers import highlight_region, pulse_glow, animated_arrow_chain
+```
+
+**Usage scenarios**:
+- **Concept definition / summary** → `create_info_card(self, title, body, tl, br, accent_color)`
+- **Key formula or important note** → `create_callout_box(self, text, tl, br, style="formula")`
+  - Styles: `"key"` (gold), `"formula"` (purple), `"note"` (blue), `"warning"` (orange)
+- **Numbered process / steps** → `create_number_badge(self, number, label, grid_pos)` + `animated_arrow_chain(self, points)`
+- **Side-by-side comparison** → `create_comparison_layout(self, left_items, right_items, tl, br)`
+- **Region emphasis** → `highlight_region(self, tl, br, color, opacity=0.15)` before placing content
+- **Pulse attention** → `pulse_glow(self, obj, color)` after revealing a key element
+
+**Section illustrations**: When `assets/section_N/illustration.png` exists, load it as a background element in the first animation block:
+```python
+import os
+illust_path = f"assets/section_N/illustration.png"
+if os.path.exists(illust_path):
+    illust = ImageMobject(illust_path).set_opacity(0.15)
+    fit_and_place(self, illust, "A1", "F6")
+    self.add(illust)  # add as background, behind other elements
+```
+
+## 7.9 Color Palette System (RECOMMENDED)
+
+Use a consistent color palette throughout the video instead of ad-hoc hex values.
+
+**Setup** (at the top of `construct()`):
+```python
+from visual_components import COLOR_PALETTES
+
+palette = COLOR_PALETTES["physics"]  # choose: physics, math, biology, chemistry, default
+```
+
+**Usage**:
+```python
+# Instead of hardcoded colors:
+obj = Text("...", color="#4FC3F7")        # ❌ hardcoded
+
+# Use palette keys:
+obj = Text("...", color=palette["primary"])  # ✅ consistent
+self.play(self.lecture[0].animate.set_color(palette["accent"]))  # ✅
+axes = create_fitted_axes(self, "B2", "E5", ...,
+                          axis_config={"color": palette["muted"]})  # ✅
+```
+
+**Available palette keys**: `primary`, `secondary`, `accent`, `highlight`, `text`, `muted`, `bg_gradient`.
 
 ## 7.7 Label Positioning Rules (MANDATORY)
 

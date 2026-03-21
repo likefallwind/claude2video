@@ -199,3 +199,121 @@ def strobe_effect(scene, path_func, axes, n, t_range, dot_radius=0.06,
                             lag_ratio=stagger / run_time),
                run_time=run_time)
     return dots
+
+
+# ---------------------------------------------------------------------------
+# Enhanced animation helpers
+# ---------------------------------------------------------------------------
+
+def highlight_region(scene, tl, br, color="#FFD700", opacity=0.15, run_time=0.5):
+    """Fade in a semi-transparent rectangle to highlight a grid region.
+
+    Parameters
+    ----------
+    scene : TeachingScene
+        The active scene.
+    tl, br : str
+        Grid keys for the region corners.
+    color : str
+        Highlight color.
+    opacity : float
+        Fill opacity (keep low for a subtle effect).
+    run_time : float
+        Animation duration.
+
+    Returns
+    -------
+    Rectangle
+        The highlight rectangle (already on screen).
+    """
+    p_tl = scene.grid[tl]
+    p_br = scene.grid[br]
+    w = abs(p_br[0] - p_tl[0])
+    h = abs(p_tl[1] - p_br[1])
+    center = np.array([(p_tl[0] + p_br[0]) / 2, (p_tl[1] + p_br[1]) / 2, 0])
+
+    rect = Rectangle(
+        width=w, height=h,
+        fill_color=color, fill_opacity=opacity,
+        stroke_width=0,
+    )
+    rect.move_to(center)
+    scene.play(FadeIn(rect), run_time=run_time)
+    return rect
+
+
+def pulse_glow(scene, obj, color="#FFD700", n_pulses=2, run_time=1.0):
+    """Create a pulsing glow effect around an object.
+
+    A surrounding circle scales up and fades out repeatedly.
+
+    Parameters
+    ----------
+    scene : TeachingScene
+        The active scene.
+    obj : Mobject
+        The object to pulse around.
+    color : str
+        Glow color.
+    n_pulses : int
+        Number of pulse repetitions.
+    run_time : float
+        Total animation duration.
+
+    Returns
+    -------
+    None
+    """
+    pulse_time = run_time / max(n_pulses, 1)
+    for _ in range(n_pulses):
+        glow = Circle(
+            radius=max(obj.width, obj.height) / 2 + 0.1,
+            stroke_color=color, stroke_width=3, fill_opacity=0,
+        )
+        glow.move_to(obj.get_center())
+        scene.play(
+            glow.animate.scale(1.5).set_stroke(opacity=0),
+            run_time=pulse_time,
+        )
+        scene.remove(glow)
+
+
+def animated_arrow_chain(scene, points, color="#4FC3F7", run_time=1.5):
+    """Draw an arrow chain connecting a list of points, segment by segment.
+
+    Parameters
+    ----------
+    scene : TeachingScene
+        The active scene.
+    points : list[np.ndarray | str]
+        Sequence of positions. If a string is given, it is looked up in
+        ``scene.grid``.
+    color : str
+        Arrow color.
+    run_time : float
+        Total animation duration for all segments.
+
+    Returns
+    -------
+    VGroup
+        The group of arrow segments (already on screen).
+    """
+    resolved = []
+    for p in points:
+        if isinstance(p, str):
+            resolved.append(scene.grid[p])
+        else:
+            resolved.append(np.array(p))
+
+    arrows = VGroup()
+    seg_time = run_time / max(len(resolved) - 1, 1)
+    for i in range(len(resolved) - 1):
+        arrow = Arrow(
+            resolved[i], resolved[i + 1],
+            color=color, buff=0.05,
+            stroke_width=2.5, max_tip_length_to_length_ratio=0.2,
+        )
+        arrows.add(arrow)
+        scene.play(GrowArrow(arrow), run_time=seg_time)
+
+    return arrows

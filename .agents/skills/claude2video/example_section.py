@@ -126,3 +126,92 @@ class ExampleScene(TeachingScene):
 
         self.wait(1)
         # Last block — no FadeOut needed
+
+
+class EnhancedExampleScene(TeachingScene):
+    """Demonstrates enhanced visual components: COLOR_PALETTES, info cards,
+    callout boxes, number badges, and highlight effects.
+
+    Run with: manim render -ql example_section.py EnhancedExampleScene
+    """
+
+    def construct(self):
+        from visual_components import (
+            COLOR_PALETTES, create_info_card, create_callout_box,
+            create_number_badge, create_comparison_layout,
+        )
+        from anim_helpers import highlight_region, pulse_glow, animated_arrow_chain
+
+        palette = COLOR_PALETTES["physics"]
+
+        self.setup_layout(
+            "Enhanced Visual Components",
+            [
+                "- Info cards for definitions",
+                "- Callout boxes for formulas",
+                "- Numbered step process",
+            ],
+        )
+
+        # === Animation for Lecture Line 1: Info Card ===
+        self.play(self.lecture[0].animate.set_color(palette["accent"]))
+
+        # Highlight the target region first
+        region = highlight_region(self, "A2", "C5", color=palette["primary"],
+                                  opacity=0.08, run_time=0.5)
+
+        card = create_info_card(
+            self, "Projectile Motion",
+            "A combination of uniform\nhorizontal velocity and\nfree-fall vertical acceleration.",
+            "A2", "C5",
+            accent_color=palette["primary"],
+        )
+        self.play(FadeIn(card, shift=UP * 0.2), run_time=1.5)
+        pulse_glow(self, card, color=palette["accent"], n_pulses=1, run_time=0.8)
+
+        self.wait(0.5)
+        block1 = VGroup(region, card)
+        self.play(FadeOut(block1), run_time=0.5)
+
+        # === Animation for Lecture Line 2: Callout Box ===
+        self.play(self.lecture[1].animate.set_color(palette["accent"]))
+
+        callout_key = create_callout_box(
+            self, "Key: Horizontal and vertical\nmotions are independent!",
+            "A2", "B5", style="key",
+        )
+        self.play(FadeIn(callout_key, shift=LEFT * 0.2), run_time=1.0)
+
+        callout_formula = create_callout_box(
+            self, "y = (1/2) g t^2",
+            "C2", "D5", style="formula",
+        )
+        self.play(FadeIn(callout_formula, shift=LEFT * 0.2), run_time=1.0)
+
+        self.wait(0.5)
+        block2 = VGroup(callout_key, callout_formula)
+        self.play(FadeOut(block2), run_time=0.5)
+
+        # === Animation for Lecture Line 3: Number Badges + Arrow Chain ===
+        self.play(self.lecture[2].animate.set_color(palette["accent"]))
+
+        badge1 = create_number_badge(self, 1, "Decompose", "B2",
+                                     color=palette["primary"])
+        badge2 = create_number_badge(self, 2, "Analyze", "B4",
+                                     color=palette["highlight"])
+        badge3 = create_number_badge(self, 3, "Combine", "B6",
+                                     color=palette["accent"])
+
+        self.play(LaggedStart(
+            FadeIn(badge1, scale=0.5),
+            FadeIn(badge2, scale=0.5),
+            FadeIn(badge3, scale=0.5),
+            lag_ratio=0.3,
+        ), run_time=1.5)
+
+        arrows = animated_arrow_chain(
+            self, ["B3", "B5"], color=palette["muted"], run_time=1.0,
+        )
+
+        self.wait(1)
+        # Last block — no FadeOut needed
