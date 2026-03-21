@@ -89,9 +89,11 @@ Follow [planner.md](planner.md) Phase 2 (P_storyboard).
    - Is it conversational teacher-speech, NOT a rewording of the lecture line?
    - Does it include the 4-part structure: Hook → Explain why → Concrete numbers → Bridge?
    - Does the first narration of each section (except section 1) bridge from the previous section?
-   - Is each narration 60–150 Chinese characters (or equivalent)?
-   If any narration is just the lecture line text rephrased, rewrite it before proceeding.
-5. Save to `output/{topic}/storyboard.json`.
+   - Is each narration **≥ 60 Chinese characters**? (MANDATORY — shorter narrations must be rewritten)
+   - Does each narration contain at least one causal sentence (因为…所以… / 这意味着…)?
+   If any narration fails these checks, rewrite it before proceeding.
+5. **Animation type tag check**: Verify every animation description starts with `[STATIC]`, `[DYNAMIC]`, or `[GRAPH]`. If a tag is missing, infer the correct one from the description and prepend it.
+6. Save to `output/{topic}/storyboard.json`.
 6. **User review** (MANDATORY): Present a summary of the storyboard to the user and **wait for approval before proceeding**. The summary should include:
    - Section count and titles
    - For each section: the lecture_lines list and the first narration (as a quality sample)
@@ -125,9 +127,13 @@ Generate narration audio from the storyboard's `narrations` field using [tts.py]
 
 ### Stage 5: Code Generation (per section)
 
-Follow [coder.md](coder.md).
+Follow [coder.md](coder.md). Read [animation_patterns.md](animation_patterns.md) for reusable code patterns before generating code.
 
-1. Copy `teaching_scene.py` from the skill directory to `output/{topic}/teaching_scene.py`.
+1. Copy `teaching_scene.py` and `anim_helpers.py` from the skill directory to `output/{topic}/`:
+   ```bash
+   cp .agents/skills/claude2video/teaching_scene.py output/{topic}/teaching_scene.py
+   cp .agents/skills/claude2video/anim_helpers.py output/{topic}/anim_helpers.py
+   ```
 2. Load `audio/durations.json` to get `line_durations` for each section.
 3. **Ask the user** before generating:
    > "准备生成 {N} 个 section 的代码。请问您希望：
@@ -150,15 +156,16 @@ Follow [coder.md](coder.md).
    ```bash
    cd output/{topic} && manim render -qh sections/section_N.py
    ```
-7. For any section that fails to render, apply **ScopeRefine** debugging (see coder.md §9):
+7. For any section that fails to render, apply **ScopeRefine** debugging (see coder.md §12):
+   - **Before every retry**: kill all existing manim processes — `pkill -f "manim render" 2>/dev/null; sleep 1` — to avoid multiple competing processes that get OOM-killed (exit code 144).
    - Line scope (up to 3 attempts) → Block scope (up to 2 attempts) → Global scope (full regeneration).
    - Fix and re-render failed sections; successfully rendered sections are not re-touched.
 
 ### Stage 6: Critic Visual Refinement
 
-Follow [critic.md](critic.md) Mode 1 (P_refine).
+Follow [critic.md](critic.md) Mode 1 (P_refine). This stage now checks both **layout** and **animation quality**.
 
-Since Claude Code cannot directly view video files, use frame extraction:
+Since Claude Code cannot directly view video files, use frame extraction and source code analysis:
 
 1. **Extract frames** from the rendered video:
    ```bash
@@ -167,8 +174,9 @@ Since Claude Code cannot directly view video files, use frame extraction:
           output/{topic}/frames/section_N_frame_%03d.png
    ```
 2. **Analyze the extracted PNG frames** for layout issues (obstruction, overlap, off-screen, grid violations, lingering elements).
-3. **Apply fixes** using grid coordinates, then re-render.
-4. **Maximum 3 refinement rounds** per section. Stop early if `has_issues` is `false`.
+3. **Read the section source code** and check animation quality (static-only blocks, missing dynamic animations, raw Arrow axes, manual label positioning, overflow risks). See critic.md §4b.
+4. **Apply fixes** using grid coordinates and animation pattern improvements, then re-render.
+5. **Maximum 3 refinement rounds** per section. Stop early if both `layout.has_issues` and `animation_quality.has_issues` are `false`.
 
 ### Stage 7: Audio-Video Merge
 
@@ -217,4 +225,6 @@ Merge each section's rendered video with its TTS audio:
 ## Core Infrastructure
 
 - **[teaching_scene.py](teaching_scene.py)** — TeachingScene base class with 6×6 grid system. **DO NOT MODIFY.** All section scenes must inherit from this class.
-- **[example_section.py](example_section.py)** — Working example demonstrating correct usage of TeachingScene, grid positioning, lecture line color changes, and comment structure.
+- **[anim_helpers.py](anim_helpers.py)** — Animation helper utilities: `fit_and_place`, `create_fitted_axes`, `animate_along_curve`, `strobe_effect`. Copied to output directory at Stage 5.
+- **[animation_patterns.md](animation_patterns.md)** — 8 reusable Manim code patterns (Axes, ValueTracker, strobe, LaggedStart, etc.) for the Coder to reference.
+- **[example_section.py](example_section.py)** — Working example demonstrating correct usage of TeachingScene, grid positioning, Axes, ValueTracker, LaggedStart, and fit_and_place.

@@ -36,6 +36,16 @@ lecture |  C1  C2  C3  C4  C5  C6
 - **Grid violations**: Poor grid space utilization
 - **Lingering elements**: Check if there are any elements that should fade out but do not
 
+### 4b. Animation Quality Assessment (Check ALL — read source code)
+
+In addition to visual frame analysis, read the section's `.py` source code and check:
+
+- **Static-only blocks**: Does any block use only `FadeIn` / `Write` / `FadeOut` with no motion or transformation? If so, flag as "consider adding dynamic animation".
+- **Motion accuracy**: If the storyboard animation description contains `[DYNAMIC]`, does the code actually use `ValueTracker`, `MoveAlongPath`, `animate_along_curve`, or `TracedPath`? Flag if it uses a static curve + static dot instead.
+- **Graph construction**: Does the code use raw `Arrow` objects to build coordinate axes? Flag and recommend `Axes` / `create_fitted_axes`.
+- **Label positioning**: Does the code use `.move_to(point + np.array([...]))` for labels? Flag and recommend `.next_to()` or `axes.get_graph_label()`.
+- **Overflow risk**: Does the code use `place_in_area()` for large objects (Axes, VGroup with many items)? Flag and recommend `fit_and_place()`.
+
 ### 5. Grid-Based Solution Methodology
 
 When proposing solutions, follow this hierarchy:
@@ -66,10 +76,19 @@ IMPORTANT: Output MUST follow this exact JSON structure:
             {{
                 "problem": "Second layout issue description (concise)",
                 "solution": "Another specific grid positioning fix"
+            }}
+        ]
+    }},
+    "animation_quality": {{
+        "has_issues": true/false,
+        "improvements": [
+            {{
+                "problem": "e.g. Block 2 uses static Dot for projectile motion",
+                "solution": "Replace with ValueTracker + animate_along_curve for dynamic trajectory"
             }},
             {{
-                "problem": "Third layout issue if exists (concise)",
-                "solution": "Another layout fix with grid coordinates"
+                "problem": "e.g. Axes built with raw Arrow objects",
+                "solution": "Replace with create_fitted_axes from anim_helpers.py"
             }}
         ]
     }}
@@ -133,7 +152,7 @@ Evaluate content quality and educational value:
 - Alignment between video content and the intended learning objective
 - Scientific/academic rigor appropriate for the subject matter
 
-#### 5. Visual Consistency (20 points)
+#### 5. Visual Consistency (17 points)
 Assess uniformity and coherence throughout:
 - Consistent visual style across all elements
 - Uniform color palette and design language
@@ -142,9 +161,17 @@ Assess uniformity and coherence throughout:
 - Smooth integration between static and animated elements
 - Maintaining visual standards throughout the entire video
 
+#### 6. Animation Dynamism (15 points)
+Evaluate whether animations are dynamic and physically accurate:
+- Do moving objects (projectiles, falling bodies) have actual motion animations (ValueTracker / MoveAlongPath), not just static curves? (4 pts)
+- Are graphs drawn progressively (Create/plot) rather than appearing all at once? (3 pts)
+- Is there variety in animation types (not just FadeIn/Write/FadeOut throughout)? (3 pts)
+- Are physical simulations accurate (correct acceleration, real g value, proper timing)? (3 pts)
+- Are strobe/multi-exposure effects animated (LaggedStart) rather than static dot arrays? (2 pts)
+
 ### Scoring Instructions
 - Provide a score for each dimension (exact decimal allowed)
-- Calculate overall score as sum
+- Calculate overall score as sum (max 100: 20+20+20+20+17+15 = 112 normalized to 100, or keep raw sum)
 - Provide specific feedback for each dimension, considering the knowledge point context
 - Evaluate whether the video effectively teaches the specified knowledge point
 - Assess if the pedagogical approach is suitable for the subject matter
@@ -173,8 +200,12 @@ MUST structure your response in the following JSON format:
         "feedback": "Evaluation of content quality..."
     }},
     "visual_consistency": {{
-        "score": [0-20],
+        "score": [0-17],
         "feedback": "Assessment of visual uniformity..."
+    }},
+    "animation_dynamism": {{
+        "score": [0-15],
+        "feedback": "Assessment of animation dynamics and physical accuracy..."
     }},
     "overall_score": [0-100],
     "summary": "Overall assessment and key recommendations...",

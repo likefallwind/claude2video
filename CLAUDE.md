@@ -25,7 +25,9 @@ The project is structured as a tri-agent skill pipeline that takes a learning to
 ## Core Infrastructure
 
 - **`teaching_scene.py`** — TeachingScene base class implementing the 6×6 Visual Anchor Grid positioning system. All generated section scenes inherit from this class. **Do not modify.**
-- **`example_section.py`** — A complete working example demonstrating correct TeachingScene usage (grid positioning, lecture line color changes, comment structure). Run with `manim render -ql example_section.py`.
+- **`anim_helpers.py`** — Animation helper utilities (`fit_and_place`, `create_fitted_axes`, `animate_along_curve`, `strobe_effect`) that ensure objects fit within grid areas and provide dynamic animation patterns. Copied alongside `teaching_scene.py` to the output directory at Stage 5.
+- **`animation_patterns.md`** — Reference library of 8 reusable Manim code patterns (Axes coordinate system, dynamic trajectory, strobe effect, formula derivation, annotations, staggered appearance, etc.) for the Coder to consult during code generation.
+- **`example_section.py`** — A complete working example demonstrating correct TeachingScene usage (Axes, ValueTracker, LaggedStart, fit_and_place, .next_to() labels). Run with `manim render -ql example_section.py`.
 
 ## TTS Narration
 

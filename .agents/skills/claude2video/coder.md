@@ -3,6 +3,10 @@
 You are an expert Manim animator using Manim Community Edition v0.19.0.
 Please generate a high-quality Manim class based on the following teaching script.
 
+**Reference files** (read these for reusable code patterns and helper functions):
+- [animation_patterns.md](animation_patterns.md) — 8 ready-to-use Manim code patterns (Axes, ValueTracker, strobe, LaggedStart, etc.)
+- [anim_helpers.py](anim_helpers.py) — importable helper functions: `fit_and_place`, `create_fitted_axes`, `animate_along_curve`, `strobe_effect`
+
 {regenerate_note}
 
 ## 1. Basic Requirements
@@ -17,7 +21,8 @@ Use the 6×6 grid system (A1–F6) for precise positioning.
 
 - Pay attention to the positioning of elements to avoid occlusions (e.g., labels and formulas).
 - All labels must be positioned within 1 grid unit of their corresponding objects.
-- **NEVER** use `.to_edge()`, `.move_to()`, or manual positioning! Only use `self.place_at_grid()` and `self.place_in_area()`.
+- **NEVER** use `.to_edge()`, `.move_to()`, or manual positioning! Only use `self.place_at_grid()`, `self.place_in_area()`, or `fit_and_place()`.
+- **Overflow warning**: `place_in_area()` only centers the object — it does NOT scale to fit. If the object may be larger than the target area (e.g. `Axes`, large `VGroup`, long formulas), use `fit_and_place(self, obj, tl, br)` from `anim_helpers.py` instead, or manually compute `scale_factor` based on area dimensions.
 - Grid layout (right side only):
 
 ```
@@ -87,6 +92,75 @@ class {section.id.title().replace('_', '')}Scene(TeachingScene):
         self.wait(remaining)                # no FadeOut on last block
 ```
 
+### Example with Axes + ValueTracker + .next_to()
+
+```python
+from manim import *
+from teaching_scene import TeachingScene
+from anim_helpers import create_fitted_axes, fit_and_place, animate_along_curve
+
+class Section2Scene(TeachingScene):
+    def construct(self):
+        self.setup_layout("竖直方向的运动", [
+            "- 竖直方向只受重力",
+            "- 速度 vy = gt",
+            "- 位移 y = ½gt²",
+        ])
+
+        # === Animation for Lecture Line 1 ===
+        self.play(self.lecture[0].animate.set_color("#FFD700"), run_time=0.5)
+
+        axes = create_fitted_axes(self, "B2", "E5",
+                                  x_range=[0, 3, 1], y_range=[0, 30, 10])
+        ax_labels = axes.get_axis_labels(
+            x_label=MathTex("t/s", font_size=18),
+            y_label=MathTex("y/m", font_size=18),
+        )
+        self.play(Create(axes), Write(ax_labels), run_time=1.5)
+
+        ball = Dot(color="#FFD700", radius=0.08)
+
+        def free_fall(t):
+            return (t, 0.5 * 9.8 * t ** 2)
+
+        tracker, trace = animate_along_curve(
+            self, ball, free_fall, axes,
+            t_range=[0, 2.5], run_time=2.0, trace_color="#4FC3F7",
+        )
+        self.wait(0.5)
+        block1 = VGroup(ball, trace) if trace else VGroup(ball)
+        self.play(FadeOut(block1), run_time=0.5)
+
+        # === Animation for Lecture Line 2 ===
+        self.play(self.lecture[1].animate.set_color("#FFD700"), run_time=0.5)
+
+        vy_graph = axes.plot(lambda t: 9.8 * t, x_range=[0, 2.5],
+                             color="#FF6B6B", stroke_width=3)
+        vy_label = axes.get_graph_label(vy_graph,
+                                         label=MathTex("v_y=gt", font_size=20),
+                                         x_val=2, direction=UP + LEFT)
+        self.play(Create(vy_graph), run_time=1.0)
+        self.play(FadeIn(vy_label), run_time=0.5)
+        self.wait(1.0)
+        block2 = VGroup(vy_graph, vy_label)
+        self.play(FadeOut(block2), run_time=0.5)
+
+        # === Animation for Lecture Line 3 (last) ===
+        self.play(self.lecture[2].animate.set_color("#FFD700"), run_time=0.5)
+
+        formulas = VGroup(
+            MathTex(r"v_y = gt", font_size=22, color="#FF6B6B"),
+            MathTex(r"y = \frac{1}{2}gt^2", font_size=22, color="#4FC3F7"),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
+        fit_and_place(self, formulas, "B2", "D4")
+        self.play(LaggedStart(*[Write(f) for f in formulas], lag_ratio=0.4),
+                  run_time=1.5)
+
+        rect = SurroundingRectangle(formulas[1], color="#FFD700", buff=0.1)
+        self.play(Create(rect), run_time=0.5)
+        self.wait(1.5)
+```
+
 ## 7. Animation Rhythm (Teaching Feel)
 
 Animations should feel like a teacher drawing on a whiteboard, not a slideshow. Follow these patterns:
@@ -133,6 +207,49 @@ Start each block with simple elements, then layer on detail. For example, when s
 
 ### Concrete number substitution
 When the narration mentions specific values (e.g., "初速度 20 m/s, 1 秒后..."), show the numeric calculation on screen alongside the symbolic formula. Use a different color for numeric examples (e.g., `#81C784` green).
+
+## 7.5 Dynamic Animation Vocabulary (MANDATORY)
+
+Choose animation types based on what the content describes. The animation description tags from the storyboard (`[STATIC]`, `[DYNAMIC]`, `[GRAPH]`) dictate which approach to use.
+
+### Decision Rules
+
+- Animation description contains **`[DYNAMIC]`** → MUST use `ValueTracker` / `MoveAlongPath` / `animate_along_curve`. Static curves + static dots are **FORBIDDEN**.
+- Animation description contains **`[GRAPH]`** → MUST use `Axes` + `axes.plot()` via `create_fitted_axes`. Raw `Arrow` manual axes are **FORBIDDEN**.
+- Animation description contains **`[STATIC]`** → `FadeIn` / `Write` / `Create` are acceptable.
+
+### Animation Type Mapping
+
+| Scene | MUST use | FORBIDDEN |
+|-------|----------|-----------|
+| Object moves along a path | `MoveAlongPath` / `ValueTracker` + updater / `animate_along_curve` | Static curve + static `Dot` |
+| Quantity changes over time | `ValueTracker` + `always_redraw` | Multiple static frame replacements |
+| Function graph / chart | `Axes` + `axes.plot()` / `create_fitted_axes` | Raw `Arrow` for axes |
+| Formula derivation | `TransformMatchingTex` | `FadeOut` old + `Write` new |
+| Multiple objects appear | `LaggedStart` | Sequential individual `FadeIn` calls |
+| Object trail | `TracedPath` | Pre-drawn full curve |
+| Annotations / labels | `Brace`, `.next_to()`, `SurroundingRectangle` | `.move_to(point + np.array([...]))` |
+| Stroboscopic effect | `strobe_effect` / `LaggedStart` | Pre-placed static dots |
+
+### Pattern Reference
+
+See [animation_patterns.md](animation_patterns.md) for complete, runnable code examples of each pattern.
+
+## 7.6 Coordinate System & Function Graph Rules (MANDATORY)
+
+1. **No manual axes**: NEVER construct coordinate axes using `Arrow` objects. Always use `Axes` or `create_fitted_axes` from `anim_helpers.py`.
+2. **No arbitrary coefficients**: NEVER use arbitrary `ParametricFunction` coefficients to "eyeball" a curve into a grid region. Always use `axes.plot(lambda x: ...)` with the real formula (e.g., `y = 0.5 * g * t**2` for free fall).
+3. **Real physics values**: Physical parameters must match the narration and real-world values: `g = 9.8 m/s²`, `v₀` from the narration's stated value, etc.
+4. **Axis labels**: Use `axes.get_axis_labels()` or position labels with `.next_to(axis, direction)`. Never use `.move_to(point + offset)`.
+5. **Graph labels**: Use `axes.get_graph_label(graph, label)` to place labels near curves.
+
+## 7.7 Label Positioning Rules (MANDATORY)
+
+1. **Object labels**: MUST use `.next_to(obj, direction, buff=0.15)`. NEVER use `.move_to(point + np.array([...]))`.
+2. **Axis labels**: Use `axes.get_axis_labels()`.
+3. **Curve labels**: Use `axes.get_graph_label(graph, label)`.
+4. **Brace labels**: Use `brace.get_text(...)` or `brace.get_tex(...)`.
+5. **Angle labels**: Use `.next_to(angle_mob, direction, buff=0.1)`.
 
 ## 8. MANDATORY CONSTRAINTS
 
@@ -209,9 +326,28 @@ self.play(FadeOut(blockN), run_time=0.5)  # replaces self.wait(0.5) inter-line g
 - [ ] `self.play(FadeOut(blockN), run_time=0.5)` appears instead of `self.wait(0.5)`.
 - [ ] The last block has no FadeOut (the scene ends naturally).
 
-## 11. ScopeRefine Auto-fix Debugging
+## 11. Known Rendering Pitfalls (NEVER do these)
 
-If rendering fails with `manim render -ql section_N.py`, apply the following escalation strategy:
+These patterns cause silent hangs or extreme slowdowns at 1080p60 — they produce no error message, making them very hard to diagnose.
+
+| Forbidden pattern | Effect | Fix |
+|---|---|---|
+| `set_color()` or `interpolate_color()` inside an updater function | Render hangs permanently at the affected animation | Remove color change from updater; use `animate.set_color()` once outside updater, or drop color transition |
+| Emoji characters in `Text()` (e.g. `☀`, `🍬`, `🌈`, `💧`) | Pango font fallback makes each frame take minutes on Linux | Replace with plain Chinese/ASCII text (e.g. `[太阳能]`, `糖分（甜味来源）`) |
+| Complex computation (matrix ops, recursion) inside an updater | Compounds per-frame, dramatically slows render | Move computation outside updater; pre-compute values |
+
+## 12. ScopeRefine Auto-fix Debugging
+
+If rendering fails or hangs, **always kill all existing manim processes first** before retrying:
+
+```bash
+pkill -f "manim render" 2>/dev/null; sleep 1
+pgrep -f "manim render" && echo "WARNING: still running" || echo "clean"
+```
+
+Skipping this step causes multiple competing manim processes that starve each other of memory and are killed by the OS (exit code 144), making the real bug much harder to find.
+
+Then apply the following escalation strategy:
 
 ### Level 1 — Line Scope (up to 3 attempts)
 - Identify the specific offending line from the traceback.

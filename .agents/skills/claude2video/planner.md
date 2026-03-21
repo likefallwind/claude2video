@@ -141,9 +141,36 @@ The **`narrations`** array must have the same length as `lecture_lines` (1-to-1 
    - "了解了竖直方向的速度规律后，我们再来看位移。"
    - For the last lecture line of a section: summarize the key takeaway instead.
 
-**Length guideline**: Each narration should be 60–150 Chinese characters (roughly 3–8x longer than the lecture line). The TTS will generate audio accordingly, and the Coder will pace animations to match.
+**Length requirement — MANDATORY**: Each narration **MUST** be **60–150 Chinese characters** (roughly 3–8x longer than the lecture line). Any narration shorter than 60 characters is **INVALID** and must be rewritten before output.
 
 **Tone**: 像一位耐心的老师在面对面讲课，不是播音员念稿。可以用"我们"、"你想想"、"对不对"、"其实"等口语词。
+
+### Full Narration Example (5 lines — GOOD vs BAD)
+
+Below is a complete 5-narration example for a "平抛运动" section. Study the contrast carefully.
+
+**BAD (fact-statement style — REJECTED)**:
+1. "平抛运动可以分解为水平和竖直两个方向。"
+2. "水平方向做匀速直线运动。"
+3. "竖直方向做自由落体运动。"
+4. "水平位移公式为 x = v₀t。"
+5. "竖直位移公式为 y = ½gt²。"
+
+**GOOD (teacher-speech style — ACCEPTED)**:
+1. "好，我们来看一个很有意思的现象。如果你站在悬崖边，同时把一颗球水平扔出去，再让另一颗球直接自由落下——你猜哪颗球先落地？其实，它们会同时落地！这说明我们可以把平抛运动拆成两个独立的方向来分析。"
+2. "那水平方向是什么情况呢？因为我们忽略空气阻力，水平方向就没有任何力在作用了。根据牛顿第一定律，没有外力就保持原来的状态，所以水平方向一直做匀速直线运动，速度始终等于初速度 v₀。举个例子，如果初速度是 20 米每秒，那 1 秒后水平位移是 20 米，2 秒后是 40 米——间隔完全相等。"
+3. "了解了水平方向，我们再看竖直方向。竖直方向只受重力，所以其实就是一个自由落体运动。速度从零开始，以 g 的加速度匀加速增大。这就是为什么两颗球同时落地——竖直方向的运动和水平方向完全无关。那竖直方向的位移怎么算呢？"
+4. "水平位移很简单，因为是匀速运动，所以 x 就等于 v₀ 乘以时间 t。比如初速度 20 米每秒，飞行 2 秒，水平位移就是 40 米。你看，匀速运动的位移和时间成正比，是一条直线。接下来我们看竖直方向的位移公式。"
+5. "竖直方向因为是匀加速运动，位移公式用的是 y 等于二分之一 gt²。注意这里是 t 的平方，所以位移增长得越来越快。比如 1 秒落下 4.9 米，2 秒落下 19.6 米——第 2 秒比第 1 秒多落了将近 3 倍。这个加速的感觉，就是自由落体的核心特征。"
+
+### Self-check Before Output (MANDATORY)
+
+Before finalizing the narrations array, perform this self-check on **every** narration:
+
+1. **Length check**: Is it ≥ 60 Chinese characters? If not → **rewrite**.
+2. **Structure check**: Does it contain at least one causal sentence (因为…所以… / 这意味着… / 之所以…是因为…)? If not → **rewrite**.
+3. **Not a restatement**: Read the corresponding lecture_line. Does the narration merely rephrase it? If yes → **rewrite** with the 4-part structure.
+4. **Bridge check**: Does the non-final narration end with a transition sentence? If not → **add one**.
 
 ### Section Transitions
 
@@ -160,8 +187,25 @@ Each section's narrations should include natural transitions:
 - **Basic Animations**: Appearance, movement, color changes, fade in/out, scaling.
 - **Emphasis Effects**: Flashing, color changes, bolding to highlight key knowledge points.
 
+### Animation Type Tags (MANDATORY)
+
+Every animation description MUST begin with one of these tags:
+
+- **`[STATIC]`** — Object appears and stays (text, formula, static diagram). Coder may use `FadeIn` / `Write` / `Create`.
+- **`[DYNAMIC]`** — Object moves or changes over time (projectile, falling body, growing vector). Coder MUST use `ValueTracker` / `MoveAlongPath` / `TracedPath`.
+- **`[GRAPH]`** — Coordinate system with plotted function(s). Coder MUST use `Axes` + `axes.plot()`.
+
+**Examples — BAD vs GOOD**:
+
+| BAD (no tag, vague) | GOOD (tagged, specific) |
+|---------------------|------------------------|
+| "绘制抛物线轨迹，标出速度向量" | "[DYNAMIC] 小球从 B2 出发做抛物线运动（x=v₀t, y=½gt²），MoveAlongPath + TracedPath 显示轨迹，到达 E5 后用 .next_to() 标注 vx 和 vy 向量" |
+| "显示 v-t 图" | "[GRAPH] 在 B2–E5 区域创建 Axes（x: 0–3s, y: 0–30m/s），用 axes.plot 绘制 v=gt 直线，get_graph_label 标注公式" |
+| "展示公式 y=½gt²" | "[STATIC] 在 C2–D4 区域 Write 公式 y=½gt²，用 SurroundingRectangle 强调" |
+| "画频闪照片效果" | "[DYNAMIC] 在 B3–F3 竖直方向用 strobe_effect 逐个显示 8 个频闪点，物理间距按 y=½gt² 递增" |
+
 ### Constraints
-- Avoid coordinate axes unless absolutely necessary.
+- Use coordinate axes when the content involves quantitative relationships (velocity–time, displacement–time, trajectory). Do NOT avoid them — use `[GRAPH]` tag instead.
 - Focus animations on visualizing concepts that are difficult to grasp from lecture lines alone.
 - Ensure that all animations are easy to understand.
 
