@@ -31,7 +31,7 @@ Full dependency list (see `requirements.txt`):
 output/{topic}/
 ├── outline.json              # Phase 1 output
 ├── storyboard.json           # Phase 2 output
-├── assets.txt                # Phase 3 output (asset keywords + descriptions)
+├── assets.json               # Phase 3 output (image specs with Planner-generated prompts)
 ├── teaching_scene.py         # Base class (copied from skill directory)
 ├── sections/
 │   ├── section_1.py          # Manim scene for section 1
@@ -39,9 +39,7 @@ output/{topic}/
 │   └── ...
 ├── assets/
 │   ├── {keyword}/
-│   │   └── {keyword}.png     # AI-generated or downloaded asset images
-│   ├── section_N/
-│   │   └── illustration.png  # AI-generated section illustration (optional)
+│   │   └── {keyword}.png     # AI-generated asset images
 │   ├── manifest.json          # Image generation manifest (prompts, model, paths)
 │   └── ...
 ├── audio/                    # TTS output
@@ -104,32 +102,29 @@ Follow [planner.md](planner.md) Phase 2 (P_storyboard).
    - Ask: "请确认以上 storyboard 内容，如需修改请告知，确认后将继续 Stage 3。"
    - Do NOT proceed to Stage 3 until the user explicitly confirms (e.g., "确认", "好的", "继续", "ok").
 
-### Stage 3a: Asset Selection
+### Stage 3a: Image Spec Generation
 
-Follow [planner.md](planner.md) Phase 3 (P_asset).
+Follow [planner.md](planner.md) Phase 3 (P_images).
 
-1. Analyze the storyboard for essential visual elements needing real images.
-2. Output asset keywords (in `keyword: description` format, one per line) to `output/{topic}/assets.txt`.
-3. Include `section_illustrations: true/false` at the end of `assets.txt`.
-4. Only select concrete, real-world objects — never abstract concepts or geometric shapes.
+1. Scan all animation descriptions in the storyboard for `[Asset: keyword/keyword.png]` tags.
+2. For each asset, generate a **context-aware image prompt** based on how the image will be used in the animation (background color, style, composition, orientation).
+3. Output to `output/{topic}/assets.json` with the full prompt for each image.
+4. If no `[Asset:]` tags exist, output `{"images": []}` and skip Stage 3b.
 
 ### Stage 3b: AI Image Generation
 
-Generate asset images using [gen_images.py](gen_images.py) (requires `GOOGLE_API_KEY` environment variable).
+Generate images using [gen_images.py](gen_images.py) (requires `GOOGLE_API_KEY` environment variable).
 
 1. Run the image generation tool:
    ```bash
    python .agents/skills/claude2video/gen_images.py \
-       output/{topic}/storyboard.json \
-       output/{topic}/assets.txt \
-       output/{topic}/assets/ \
-       --section-illustrations   # if assets.txt contains "section_illustrations: true"
+       output/{topic}/assets.json \
+       output/{topic}/assets/
    ```
 2. This produces:
-   - `assets/{keyword}/{keyword}.png` — AI-generated asset icons (512×512, 1:1)
-   - `assets/section_N/illustration.png` — Section illustrations (16:9, if requested)
-   - `assets/manifest.json` — Records prompts, model, and paths for each generated image
-3. Verify generated images exist and are reasonable. If `GOOGLE_API_KEY` is not set, fall back to web search download (Stage 3a legacy behavior).
+   - `assets/{keyword}/{keyword}.png` — AI-generated images (prompts from Planner)
+   - `assets/manifest.json` — Records prompts, model, paths, and success status
+3. Verify generated images exist. If `GOOGLE_API_KEY` is not set, skip this stage.
 
 ### Stage 4: TTS Narration Synthesis
 
@@ -238,7 +233,7 @@ Merge each section's rendered video with its TTS audio:
 |-------|------|-------------|-------------|
 | 1 | Planner | [planner.md](planner.md) | P_outline |
 | 2 | Planner | [planner.md](planner.md) | P_storyboard |
-| 3a | Planner | [planner.md](planner.md) | P_asset |
+| 3a | Planner | [planner.md](planner.md) | P_images |
 | 3b | Image Gen | [gen_images.py](gen_images.py) | CLI tool |
 | 4 | TTS | [tts.py](tts.py) | CLI tool |
 | 5 | Coder | [coder.md](coder.md) | P_coder + P_vis + Duration Control + ScopeRefine |

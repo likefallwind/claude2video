@@ -324,15 +324,26 @@ from anim_helpers import highlight_region, pulse_glow, animated_arrow_chain
 - **Region emphasis** → `highlight_region(self, tl, br, color, opacity=0.15)` before placing content
 - **Pulse attention** → `pulse_glow(self, obj, color)` after revealing a key element
 
-**Section illustrations**: When `assets/section_N/illustration.png` exists, load it as a background element in the first animation block:
+**Asset images**: When the animation description contains `[Asset: keyword/keyword.png]`, load and display the image as a **foreground element** at the specified grid area:
 ```python
 import os
-illust_path = f"assets/section_N/illustration.png"
-if os.path.exists(illust_path):
-    illust = ImageMobject(illust_path).set_opacity(0.15)
-    fit_and_place(self, illust, "A1", "F6")
-    self.add(illust)  # add as background, behind other elements
+
+img_path = "assets/keyword/keyword.png"
+if os.path.exists(img_path):
+    img = ImageMobject(img_path)
+    img.scale_to_fit_height(2.5)         # adjust based on grid area size
+    self.place_in_area(img, "B2", "D4")  # place at grid area from animation description
+    self.play(FadeIn(img, shift=UP * 0.2), run_time=0.8)
 ```
+
+**Sizing guide** (based on grid area):
+- 2×2 cell area → `scale_to_fit_height(1.5)` — small icon, decorative
+- 3×3 cell area → `scale_to_fit_height(2.5)` — main visual element
+- 4×3 cell area → `scale_to_fit_height(3.0)` — large standalone visual
+
+**IMPORTANT — ImageMobject is NOT a VMobject**:
+- Cannot be added to `VGroup` — use `Group` instead, or `FadeOut` separately
+- Block cleanup: `self.play(FadeOut(img), FadeOut(block_vgroup), run_time=0.5)`
 
 ## 7.9 Color Palette System (RECOMMENDED)
 
