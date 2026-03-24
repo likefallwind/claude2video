@@ -59,7 +59,7 @@ Save to `output/{topic}/outline.json` and proceed to Phase 2 (P_storyboard).
 - Prioritize sections that can benefit from the visual elements demonstrated in the image
 
 ### Requirements
-1. The total duration should be fixed at around {duration} minutes.
+1. The total duration should be fixed at around 5–8 minutes (adjust based on topic complexity).
 2. The sections should be arranged in a progressive and logical order.
 3. Emphasize key concepts and critical Tutorial topics.
 4. When presenting mathematical concepts, prefer representations that integrate graphical elements to enhance comprehension.

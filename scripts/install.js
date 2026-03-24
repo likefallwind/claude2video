@@ -24,7 +24,7 @@ function getTarget() {
   const args = process.argv.slice(2);
   if (args.includes('--global')) {
     const home = process.env.HOME || process.env.USERPROFILE;
-    return path.join(home, '.claude', 'agents', 'skills', SKILL_NAME);
+    return path.join(home, '.claude', 'skills', SKILL_NAME);
   }
 
   // When running as postinstall, cwd is the package root itself — skip

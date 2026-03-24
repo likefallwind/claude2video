@@ -8,18 +8,28 @@ Adapted from the [Code2Video](https://github.com/showlab/Code2Video) paradigm (a
 
 ## Installation
 
-**Step 1 — Install the skill into your project:**
+**Option A — Install into current project:**
 
 ```bash
 npm install claude2video
 ```
 
-This copies the skill files into `.agents/skills/claude2video/` in your project.
+Copies the skill into `.agents/skills/claude2video/` in your project directory.
+
+**Option B — Install globally (available in all projects):**
+
+```bash
+npx claude2video --global
+```
+
+Copies the skill into `~/.claude/skills/claude2video/`.
 
 **Step 2 — Install Python and system dependencies:**
 
 ```bash
 bash node_modules/claude2video/setup.sh
+# or, if installed globally:
+bash ~/.claude/skills/claude2video/setup.sh
 ```
 
 Supports Ubuntu/Debian (including WSL2), Fedora, and macOS.
@@ -105,14 +115,19 @@ output/{topic}/
 
 ## Usage
 
-Invoke the skill from Claude Code:
+> **Note:** Auto-triggering is unreliable — always invoke the skill explicitly for best results.
 
+**Option 1 — slash command:**
 ```
 /claude2video
 ```
 
-Or reference it directly in a prompt:
+**Option 2 — direct mention in prompt:**
+```
+@claude2video 生成一个讲解「勾股定理」的教学视频
+```
 
+**Option 3 — explicit reference:**
 > 请用 claude2video skill 生成一个讲解「勾股定理」的教学视频
 
 The skill will ask whether to generate sections in **parallel** (faster) or **sequential** (step-by-step review) before starting.

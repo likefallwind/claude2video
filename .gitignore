@@ -50,3 +50,6 @@ venv.bak/
 .idea/
 .DS_Store
 .claude/
+
+# Skill development workspace
+.skill-creator-workspace/

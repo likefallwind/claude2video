@@ -385,7 +385,7 @@ axes = create_fitted_axes(self, "B2", "E5", ...,
 - **Consistency**: Do not apply any animation to the lecture lines except for color changes. The lecture lines and title's size and position must remain unchanged.
 - **Assets**: If provided, MUST use the elements in the Animation Description formatted as `[Asset: XXX/XXX.png]` (abstract path).
 - **Simplicity**: Avoid 3D functions, complex panels, or external dependencies except for filenames in Animation Description.
-- **Block Cleanup (CRITICAL)**: **Every animation block MUST FadeOut all its objects** before the next block starts. Manim never auto-removes objects — without explicit cleanup, all blocks accumulate on screen simultaneously, making the video unreadable. Use the 0.5s inter-line silence gap as the FadeOut window (see §8 and §10).
+- **Block Cleanup (CRITICAL)**: See §10 for the full pattern — every block except the last MUST FadeOut all its objects before the next block starts.
 
 ## 9. Duration Control (TTS Sync)
 

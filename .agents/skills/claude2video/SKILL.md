@@ -1,6 +1,6 @@
 ---
 name: claude2video
-description: Code-centric framework for educational video generation via executable Manim Python code.
+description: Generate narrated educational videos (Manim animations + TTS audio + ffmpeg MP4) from a topic string or Markdown outline. Invoke explicitly with /claude2video or @claude2video. Handles the full 8-stage pipeline: outline → storyboard → TTS synthesis → Manim code generation → rendering → audio-video merge → final video.
 ---
 
 # Code2Video Skill
@@ -166,7 +166,7 @@ Follow [coder.md](coder.md). Read [animation_patterns.md](animation_patterns.md)
    - Each file: a Manim scene class inheriting from `TeachingScene`.
    - Use ONLY `self.place_at_grid()` and `self.place_in_area()` for positioning.
    - Follow the `# === Animation for Lecture Line N ===` comment structure.
-   - Apply duration control rules (coder.md §8) using `line_durations` from durations.json.
+   - Apply duration control rules (coder.md §9) using `line_durations` from durations.json.
    - Save to `output/{topic}/sections/section_N.py`.
 6. **Render** (follow same parallel/sequential choice as generation):
    - **If parallel**: launch all render commands in one message via parallel Bash tool calls.
