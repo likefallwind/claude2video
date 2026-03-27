@@ -8,10 +8,10 @@ Adapted from the [Code2Video](https://github.com/showlab/Code2Video) paradigm (a
 
 ## Installation
 
-**Option A — Install into current project (from GitHub):**
+**Option A — Install into current project:**
 
 ```bash
-npm install github:likefallwind/claude2video
+npx github:likefallwind/claude2video
 ```
 
 Copies the skill into `.agents/skills/claude2video/` in your project directory.
