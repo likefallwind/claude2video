@@ -27,15 +27,25 @@ function getTarget() {
     return path.join(home, '.claude', 'skills', SKILL_NAME);
   }
 
-  // When running as postinstall, cwd is the package root itself — skip
-  // (we only want to install into the *consumer* project, not ourselves)
   const cwd = process.cwd();
-  if (cwd === pkgDir) {
-    // Running postinstall inside the skill package itself — no-op
-    return null;
+
+  if (cwd !== pkgDir) {
+    // Running via npx — cwd is the user's project directory
+    return path.join(cwd, '.agents', 'skills', SKILL_NAME);
   }
 
-  return path.join(cwd, '.agents', 'skills', SKILL_NAME);
+  // cwd === pkgDir: either npm postinstall of a dependency, or local dev
+  // Detect npm dependency install: pkgDir will contain /node_modules/<pkg>
+  const nmMarker = path.sep + 'node_modules' + path.sep;
+  const nmIdx = pkgDir.lastIndexOf(nmMarker);
+  if (nmIdx !== -1) {
+    // Installed as a dependency — consumer project root is before node_modules
+    const consumerRoot = pkgDir.substring(0, nmIdx);
+    return path.join(consumerRoot, '.agents', 'skills', SKILL_NAME);
+  }
+
+  // Running inside the package source itself (local dev) — no-op
+  return null;
 }
 
 function copyDir(src, dest) {
@@ -65,9 +75,18 @@ function main() {
 
   try {
     copyDir(skillSrc, target);
+
+    // Also copy setup.sh so it's accessible from the target directory
+    const setupSrc = path.join(pkgDir, 'setup.sh');
+    if (fs.existsSync(setupSrc)) {
+      const setupDest = path.join(target, 'setup.sh');
+      fs.copyFileSync(setupSrc, setupDest);
+      fs.chmodSync(setupDest, 0o755);
+    }
+
     console.log(`\n[claude2video] Skill installed to: ${target}`);
     console.log(`\nNext step — install Python/system dependencies:`);
-    console.log(`  bash node_modules/claude2video/setup.sh\n`);
+    console.log(`  bash ${path.join(target, 'setup.sh')}\n`);
   } catch (err) {
     console.error(`[claude2video] Install failed: ${err.message}`);
     process.exit(1);

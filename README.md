@@ -27,8 +27,9 @@ Copies the skill into `~/.claude/skills/claude2video/`.
 **Step 2 — Install Python and system dependencies:**
 
 ```bash
-bash node_modules/claude2video/setup.sh
-# or, if installed globally:
+# Local install:
+bash .agents/skills/claude2video/setup.sh
+# Global install:
 bash ~/.claude/skills/claude2video/setup.sh
 ```
 
