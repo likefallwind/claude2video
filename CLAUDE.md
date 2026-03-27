@@ -42,4 +42,4 @@ The pipeline supports voice narration via `edge-tts` (strategy: audio-first, the
 
 ## Usage
 
-This project contains an AI agent skill located in `.agents/skills/claude2video/`. An AI agent can invoke this skill to execute the end-to-end video generation pipeline. See `SKILL.md` for the complete 8-stage execution workflow.
+This project contains an AI agent skill located in `claude2video/`. An AI agent can invoke this skill to execute the end-to-end video generation pipeline. See `claude2video/SKILL.md` for the complete 8-stage execution workflow.

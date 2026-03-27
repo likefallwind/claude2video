@@ -8,21 +8,15 @@ Adapted from the [Code2Video](https://github.com/showlab/Code2Video) paradigm (a
 
 ## Installation
 
-**Option A — Install into current project:**
+**Step 1 — Install the skill:**
 
 ```bash
-npx github:likefallwind/claude2video
+# Into current project:
+npx skills add https://github.com/likefallwind/claude2video
+
+# Globally (available in all projects):
+npx skills add https://github.com/likefallwind/claude2video --global
 ```
-
-Copies the skill into `.agents/skills/claude2video/` in your project directory.
-
-**Option B — Install globally (available in all projects):**
-
-```bash
-npx github:likefallwind/claude2video --global
-```
-
-Copies the skill into `~/.claude/skills/claude2video/`.
 
 **Step 2 — Install Python and system dependencies:**
 
@@ -70,21 +64,18 @@ Each section of the course becomes a separate Manim animation scene. Narration a
 
 ```
 .
-├── .agents/skills/claude2video/   # The skill (copied to user project on npm install)
+├── claude2video/                  # Skill directory (installed by npx skills add)
 │   ├── SKILL.md                   # Entry point — 8-stage pipeline execution guide
 │   ├── planner.md                 # P_parse / P_outline / P_storyboard / P_asset prompts
 │   ├── coder.md                   # P_coder + Duration Control + ScopeRefine prompts
 │   ├── critic.md                  # P_refine (layout) + P_aesth (scoring) prompts
 │   ├── tts.py                     # CLI: storyboard.json → audio/ + durations.json
 │   ├── teaching_scene.py          # TeachingScene base class (6×6 grid system)
-│   └── example_section.py         # Working example — manim render -ql example_section.py
-├── examples/
-│   └── biology_cells.md           # Sample Markdown course outline (7th grade biology)
-├── scripts/
-│   └── install.js                 # npm postinstall — copies skill to .agents/skills/
-├── package.json
-├── requirements.txt               # Python dependencies
-├── setup.sh                       # System dependency installer
+│   ├── example_section.py         # Working example — manim render -ql example_section.py
+│   ├── setup.sh                   # System dependency installer
+│   ├── requirements.txt           # Python dependencies
+│   └── examples/
+│       └── biology_cells.md       # Sample Markdown course outline (7th grade biology)
 ├── CLAUDE.md                      # Project instructions for Claude Code
 ├── .gitignore
 └── README.md
