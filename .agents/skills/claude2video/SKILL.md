@@ -1,6 +1,6 @@
 ---
 name: claude2video
-description: Generate narrated educational videos (Manim animations + TTS audio + ffmpeg MP4) from a topic string or Markdown outline. Invoke explicitly with /claude2video or @claude2video. Handles the full 8-stage pipeline: outline → storyboard → TTS synthesis → Manim code generation → rendering → audio-video merge → final video.
+description: "Generate narrated educational videos (Manim animations + TTS audio + ffmpeg MP4) from a topic string or Markdown outline. Invoke explicitly with /claude2video or @claude2video. Handles the full 8-stage pipeline: outline → storyboard → TTS synthesis → Manim code generation → rendering → audio-video merge → final video."
 ---
 
 # Code2Video Skill
