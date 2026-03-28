@@ -30,8 +30,9 @@ lecture |  C1  C2  C3  C4  C5  C6
 - Area positioning example: `self.place_in_area(obj, 'A1', 'C3', scale_factor=0.7)`
 
 ### 4. Layout Assessment (Check ALL)
+- **Lecture-Animation overlap (CRITICAL)**: Check if ANY animation element (card, box, label, shape) visually overlaps with the left-side lecture lines. The lecture area and animation grid are separated — they must NEVER overlap. If overlap is found, the fix is to move the animation element rightward (use higher column numbers) or shrink it.
 - **Obstruction**: Animations blocking left-side lecture notes
-- **Overlap**: Animation elements (formulas, labels, shapes) overlapping
+- **Overlap**: Animation elements (formulas, labels, shapes) overlapping each other
 - **Off-screen**: Elements cut off or outside visible area
 - **Grid violations**: Poor grid space utilization
 - **Lingering elements**: Check if there are any elements that should fade out but do not

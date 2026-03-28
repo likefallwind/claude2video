@@ -17,23 +17,28 @@ class TeachingScene(Scene):
         self.title = Text(title_text, font_size=28, color=WHITE).to_edge(UP)
         self.add(self.title)
 
-        # Left-side lecture content (bullets with "-")
+        # Left-side lecture content — width-constrained to avoid overlap
+        MAX_LECTURE_WIDTH = 5.0  # scene units; keeps text in the left ~35%
         lecture_texts = [Text(line, font_size=22, color=WHITE) for line in
                          lecture_lines]
         self.lecture = VGroup(*lecture_texts).arrange(DOWN, aligned_edge=LEFT).scale(
             0.8)
+        # Shrink further if any line exceeds the maximum width
+        if self.lecture.width > MAX_LECTURE_WIDTH:
+            self.lecture.scale(MAX_LECTURE_WIDTH / self.lecture.width)
         self.lecture.to_edge(LEFT, buff=0.2)
         self.add(self.lecture)
 
         # Define fine-grained animation grid (6x6 grid on right side)
+        # Grid starts at x=1.8 so it never overlaps with lecture text.
         self.grid = {}
         rows = ["A", "B", "C", "D", "E", "F"]  # Top to bottom
         cols = ["1", "2", "3", "4", "5", "6"]  # Left to right
 
         for i, row in enumerate(rows):
             for j, col in enumerate(cols):
-                x = 0.5 + j * 1
-                y = 2.2 - i * 1
+                x = 1.8 + j * 0.95
+                y = 2.2 - i * 0.95
                 self.grid[f"{row}{col}"] = np.array([x, y, 0])
 
     def place_at_grid(self, mobject, grid_pos, scale_factor=1.0):

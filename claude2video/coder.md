@@ -23,22 +23,29 @@ Use the 6×6 grid system (A1–F6) for precise positioning.
 - Pay attention to the positioning of elements to avoid occlusions (e.g., labels and formulas).
 - All labels must be positioned within 1 grid unit of their corresponding objects.
 - **NEVER** use `.to_edge()`, `.move_to()`, or manual positioning! Only use `self.place_at_grid()`, `self.place_in_area()`, or `fit_and_place()`.
+  - This includes manually created objects like `Text()`, `Circle()`, `RoundedRectangle()` — do NOT call `.move_to(self.grid["B3"])` on them. Instead use `self.place_at_grid(obj, "B3")` or `fit_and_place(self, obj, "B2", "C4")`.
 - **Overflow warning**: `place_in_area()` only centers the object — it does NOT scale to fit. If the object may be larger than the target area (e.g. `Axes`, large `VGroup`, long formulas), use `fit_and_place(self, obj, tl, br)` from `anim_helpers.py` instead, or manually compute `scale_factor` based on area dimensions.
-- Grid layout (right side only):
+
+### Grid Layout & Lecture-Animation Separation
+
+The grid occupies the RIGHT side of the screen. Lecture lines occupy the LEFT side. They are separated — **animation content must never overlap with lecture text**.
 
 ```
-           A1  A2  A3  A4  A5  A6
-           B1  B2  B3  B4  B5  B6
-lecture |  C1  C2  C3  C4  C5  C6
-           D1  D2  D3  D4  D5  D6
-           E1  E2  E3  E4  E5  E6
-           F1  F2  F3  F4  F5  F6
+                          ┃  A1  A2  A3  A4  A5  A6
+                          ┃  B1  B2  B3  B4  B5  B6
+  lecture lines (left)    ┃  C1  C2  C3  C4  C5  C6
+                          ┃  D1  D2  D3  D4  D5  D6
+                          ┃  E1  E2  E3  E4  E5  E6
+                          ┃  F1  F2  F3  F4  F5  F6
 ```
+
+**Column 1 is the leftmost boundary** of the animation area. All animation content must stay within the grid. Do NOT place elements to the left of column 1.
 
 ## 3. Positioning Methods
 
 - **Point positioning**: `self.place_at_grid(obj, 'B2', scale_factor=0.8)`
 - **Area positioning**: `self.place_in_area(obj, 'A1', 'C3', scale_factor=0.7)`
+- **Safe area fit**: `fit_and_place(self, obj, 'A1', 'C3')` — scales to fit, prevents overflow
 - **NEVER** use `.to_edge()`, `.move_to()`, or manual positioning!
 
 ## 4. Teaching Content
